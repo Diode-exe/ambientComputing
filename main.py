@@ -9,6 +9,7 @@ from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 import sys
+import datetime
 
 # Minimal motion detector (no argparse). Configure constants below.
 SOURCE = 0            # camera index or video file path
@@ -31,6 +32,14 @@ root.geometry(f"{width}x{height}")
 root.configure(background='black')
 
 root.withdraw()
+
+class Data:
+    newData = False
+
+def getTimeToDisplay():
+    currentTime = str(datetime.datetime.now().replace(microsecond=0))
+    timeVar.set(currentTime)
+    Data.newData = True
 
 # Get audio endpoint volume if available
 def listenForAck():
@@ -160,6 +169,8 @@ def openCVMain():
                     print("No motion - requesting fullscreen")
                     show_fullscreen_event.set()
                     openCVMain.consec_no_motion = 0
+
+            getTimeToDisplay()
             
             # if getattr(openCVMain, "consec_no_motion", 0) <= 200:
             #     if not show_withdraw_event.is_set():
@@ -172,7 +183,7 @@ def openCVMain():
             cv2.destroyAllWindows()
 
 def _poll_fullscreen():
-    if show_fullscreen_event.is_set():
+    if show_fullscreen_event.is_set() and Data.newData:
         try:
             root.deiconify()
             root.attributes("-fullscreen", True)
@@ -183,7 +194,6 @@ def _poll_fullscreen():
         show_fullscreen_event.clear()
     root.after(200, _poll_fullscreen)
 
-
 def _poll_withdraw():
     if show_withdraw_event.is_set():
         try:
@@ -192,6 +202,10 @@ def _poll_withdraw():
             pass
         show_withdraw_event.clear()
     root.after(200, _poll_withdraw)
+
+timeVar = tk.StringVar(value="time")
+timeLabel = tk.Label(root, textvariable=timeVar)
+timeLabel.pack()
 
 if __name__ == '__main__':
     # start polling GUI events before launching worker
