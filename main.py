@@ -11,12 +11,17 @@ from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 import sys
 import datetime
 import requests
+import random
 
 # Minimal motion detector (no argparse). Configure constants below.
 SOURCE = 0            # camera index or video file path
 MIN_AREA = 500        # minimum contour area to consider motion
 DISPLAY = True
 MIN_CONSECUTIVE = 3   # require motion for this many consecutive frames before reporting
+
+global fadedIn
+
+fadedIn = False
 
 # Event used to request fullscreen from the GUI/main thread
 show_fullscreen_event = threading.Event()
@@ -116,6 +121,8 @@ def fadeInWindow():
     time.sleep(0.5)
     root.update()
     root.attributes('-alpha', 1.0)
+    global fadedIn
+    fadedIn = True
 
 def fadeOutWindow():
     time.sleep(0.5)
@@ -148,9 +155,13 @@ def fadeOutWindow():
     time.sleep(0.5)
     root.update()
     root.attributes('-alpha', 0.1)
+    global fadedIn
+    fadedIn = False
 
 def getTimeToDisplay():
-    currentTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
+    currentTime = str(datetime.datetime.now().strftime("%Y-%m-%d \n %H:%M:%S"))
+    dayOfTheWeek = datetime.datetime.now().strftime("%A")
+    dotwVar.set(dayOfTheWeek)
     timeVar.set(currentTime)
     global oldTime
     if currentTime != oldTime:
@@ -334,7 +345,8 @@ def _poll_fullscreen():
         try:
             root.deiconify()
             root.attributes("-fullscreen", True)
-            fadeInWindow()
+            if not fadedIn:
+                fadeInWindow()
             root.lift()
             root.focus_force()
         except Exception:
@@ -353,13 +365,43 @@ def _poll_withdraw():
         show_withdraw_event.clear()
     root.after(200, _poll_withdraw)
 
+def moveStuffFrame(stuffFrame):
+    stuffFrame.place_forget()
+
+    # Get frame size
+    stuffFrame.update_idletasks()
+    frame_width = stuffFrame.winfo_width()
+    frame_height = stuffFrame.winfo_height()
+
+    # Get screen size
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+
+    # Calculate valid position
+    max_x = screen_width - frame_width
+    max_y = screen_height - frame_height
+    new_x = random.randint(0, max_x)
+    new_y = random.randint(0, max_y)
+
+    stuffFrame.place(x=new_x, y=new_y)
+    root.after(120000, lambda: moveStuffFrame(stuffFrame))
+
+stuffFrame = tk.Frame(root)
+stuffFrame.configure(bg="black")
+
+moveStuffFrame(stuffFrame)
+
 timeVar = tk.StringVar(value="time")
-timeLabel = tk.Label(root, textvariable=timeVar, fg='white', bg='black', font=('Helvetica', 96))
+timeLabel = tk.Label(stuffFrame, textvariable=timeVar, fg='white', bg='black', font=('Helvetica', 72))
 timeLabel.pack(expand=True)
+
+dotwVar = tk.StringVar(value="dotw")
+dotwLabel = tk.Label(stuffFrame, textvariable=dotwVar, fg='white', bg='black', font=('Helvetica', 72))
+dotwLabel.pack(expand=True)
 
 global weatherLabel, weatherVar
 weatherVar = tk.StringVar(value="weather")
-weatherLabel = tk.Label(root, textvariable=weatherVar, fg='white', bg='black', font=('Helvetica', 96))
+weatherLabel = tk.Label(stuffFrame, textvariable=weatherVar, fg='white', bg='black', font=('Helvetica', 72))
 weatherLabel.pack(expand=True)
 
 if __name__ == '__main__':
