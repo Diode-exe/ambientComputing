@@ -140,19 +140,42 @@ def listenForAck():
             t = None
 
         r = sr.Recognizer()
+        # improve robustness in noisy environments
+        r.dynamic_energy_threshold = True
+        r.pause_threshold = 0.5
 
         try:
-            while not stop.is_set():
-                with sr.Microphone() as source:
-                    print("listening...")
-                    audio = r.listen(source)
-                text = r.recognize_google(audio).lower()
-                print(text)
-                if "acknowledge" in text or "acknowledged" in text:
-                    show_withdraw_event.set()
-                    Data.newData = False
+            with sr.Microphone() as source:
+                try:
+                    r.adjust_for_ambient_noise(source, duration=1.0)
+                except Exception:
+                    pass
+
+                while not stop.is_set():
+                    try:
+                        print("listening...")
+                        # limit phrase length to avoid excessively long captures
+                        audio = r.listen(source, timeout=None, phrase_time_limit=5)
+                        try:
+                            text = r.recognize_google(audio).lower()
+                        except sr.UnknownValueError:
+                            # could not understand audio
+                            continue
+                        except sr.RequestError as e:
+                            print("Speech recognition request failed:", e)
+                            time.sleep(1)
+                            continue
+
+                        print(text)
+                        # accept several common variants/short forms
+                        if any(k in text for k in ("acknowledge", "acknowledged", "i acknowledge", "ack")):
+                            show_withdraw_event.set()
+                            Data.newData = False
+                    except Exception as e:
+                        print("listen error:", e)
+                        time.sleep(0.5)
         except Exception as e:
-            print(e)
+            print("microphone error:", e)
     finally:
         try:
             pythoncom.CoUninitialize()
