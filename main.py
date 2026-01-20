@@ -37,28 +37,50 @@ root.withdraw()
 class Data:
     newData = False
 
-# https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m&timezone=America%2FChicago&forecast_days=1
+def getWeather(weatherVar):
+    # Run network I/O on a background thread and update Tkinter from main thread.
+    def _fetch():
+        url = "https://api.open-meteo.com/v1/forecast"
+        params = {
+            "latitude": 49.89,
+            "longitude": -97.13,
+            "current_weather": True,
+            "timezone": "America/Chicago",
+        }
+        temp = None
+        try:
+            r = requests.get(url, params=params, timeout=5)
+            r.raise_for_status()
+            data = r.json()
+            temp = data.get("current_weather", {}).get("temperature")
+            if temp is None:
+                print("getWeather: no temperature in response", data)
+            else:
+                print(temp)
+        except Exception as e:
+            print("getWeather error:", e)
 
-def getWeather():
-    url = "https://api.open-meteo.com/v1/forecast"
-    params = {
-        "latitude": 49.89,
-        "longitude": -97.13,
-        "current_weather": True,
-        "timezone": "America/Chicago",
-    }
-    try:
-        r = requests.get(url, params=params, timeout=5)
-        r.raise_for_status()
-        data = r.json()
-        temp = data.get("current_weather", {}).get("temperature")
-        if temp is None:
-            print("getWeather: no temperature in response", data)
-        else:
-            print(temp)
-    except Exception as e:
-        print("getWeather error:", e)
-getWeather()
+        # Schedule the UI update on the main thread.
+        try:
+            root.after(0, lambda: weatherVar.set
+                       (f"The temperature is {temp if temp is not None else 'N/A'}C°"))
+        except Exception:
+            # If scheduling fails, ignore — main thread may be shutting down.
+            pass
+
+        # Schedule next fetch via the main loop (safe) by starting another background thread
+        try:
+            root.after(60000, start_fetch_thread)
+        except Exception:
+            pass
+
+    th = threading.Thread(target=_fetch, daemon=True)
+    th.start()
+
+
+def start_fetch_thread():
+    # Helper to kick off a single background weather fetch.
+    return getWeather(weatherVar)
 
 # i did this so that i can compare it below, it's only set once as a default
 oldTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
@@ -162,43 +184,51 @@ def listenForAck():
         except Exception:
             t = None
 
-        r = sr.Recognizer()
-        # improve robustness in noisy environments
-        r.dynamic_energy_threshold = True
-        r.pause_threshold = 0.5
+        # Keep trying to open the microphone; if the stream closes, re-open and continue.
+        while not stop.is_set():
+            r = sr.Recognizer()
+            # improve robustness in noisy environments
+            r.dynamic_energy_threshold = True
+            r.pause_threshold = 0.5
 
-        try:
-            with sr.Microphone() as source:
-                try:
-                    r.adjust_for_ambient_noise(source, duration=1.0)
-                except Exception:
-                    pass
-
-                while not stop.is_set():
+            try:
+                with sr.Microphone() as source:
                     try:
-                        print("listening...")
-                        # limit phrase length to avoid excessively long captures
-                        audio = r.listen(source, timeout=None, phrase_time_limit=5)
-                        try:
-                            text = r.recognize_google(audio).lower()
-                        except sr.UnknownValueError:
-                            # could not understand audio
-                            continue
-                        except sr.RequestError as e:
-                            print("Speech recognition request failed:", e)
-                            time.sleep(1)
-                            continue
+                        r.adjust_for_ambient_noise(source, duration=1.0)
+                    except Exception:
+                        pass
 
-                        print(text)
-                        # accept several common variants/short forms
-                        if any(k in text for k in ("acknowledge", "acknowledged", "i acknowledge", "ack")):
-                            show_withdraw_event.set()
-                            Data.newData = False
-                    except Exception as e:
-                        print("listen error:", e)
-                        time.sleep(0.5)
-        except Exception as e:
-            print("microphone error:", e)
+                    # Inner loop: listen until we hit a stream error, then break to re-open
+                    while not stop.is_set():
+                        try:
+                            print("listening...")
+                            audio = r.listen(source, timeout=None, phrase_time_limit=5)
+                            try:
+                                text = r.recognize_google(audio).lower()
+                            except sr.UnknownValueError:
+                                continue
+                            except sr.RequestError as e:
+                                print("Speech recognition request failed:", e)
+                                time.sleep(1)
+                                continue
+
+                            print(text)
+                            # accept several common variants/short forms
+                            if any(k in text for k in ("acknowledge", "acknowledged", "i acknowledge", "ack")):
+                                show_withdraw_event.set()
+                                Data.newData = False
+                        except (OSError, IOError, sr.WaitTimeoutError) as e:
+                            # Stream closed or I/O error — break to outer loop and re-open microphone
+                            print("listen error (stream closed or I/O):", e)
+                            break
+                        except Exception as e:
+                            print("listen error:", e)
+                            time.sleep(0.5)
+            except Exception as e:
+                print("microphone error (opening):", e)
+
+            # small delay before retrying to open microphone
+            time.sleep(1)
     finally:
         try:
             pythoncom.CoUninitialize()
@@ -327,6 +357,11 @@ timeVar = tk.StringVar(value="time")
 timeLabel = tk.Label(root, textvariable=timeVar, fg='white', bg='black', font=('Helvetica', 96))
 timeLabel.pack(expand=True)
 
+global weatherLabel, weatherVar
+weatherVar = tk.StringVar(value="weather")
+weatherLabel = tk.Label(root, textvariable=weatherVar, fg='white', bg='black', font=('Helvetica', 96))
+weatherLabel.pack(expand=True)
+
 if __name__ == '__main__':
     # start polling GUI events before launching worker
     root.after(200, _poll_fullscreen)
@@ -335,6 +370,9 @@ if __name__ == '__main__':
     listenThread = threading.Thread(target=listenForAck, daemon=True)
     captureThread.start()
     listenThread.start()
+
+    # Start the periodic weather fetch on a background thread (UI updates scheduled on main thread)
+    start_fetch_thread()
 
     def _on_close():
         stop.set()
