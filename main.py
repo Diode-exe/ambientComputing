@@ -25,6 +25,10 @@ root = tk.Tk()
 width = root.winfo_screenwidth()
 height = root.winfo_screenheight()
 root.geometry(f"{width}x{height}")
+# Source - https://stackoverflow.com/a/2745312
+# Posted by msw
+# Retrieved 2026-01-20, License - CC BY-SA 2.5
+root.configure(background='black')
 
 root.withdraw()
 
@@ -35,6 +39,26 @@ def listenForAck():
         pythoncom.CoInitialize()
     except Exception:
         pass
+    try:
+        try:
+            devices = AudioUtilities.GetSpeakers()
+            if hasattr(devices, "Activate"):
+                interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+                volume = cast(interface, POINTER(IAudioEndpointVolume))
+            else:
+                volume = None
+        except Exception:
+            volume = None
+
+        try:
+            c = wmi.WMI()
+        except Exception:
+            c = None
+
+        try:
+            t = wmi.WMI(moniker="//./root/wmi")
+        except Exception:
+            t = None
 
         r = sr.Recognizer()
 
