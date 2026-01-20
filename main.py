@@ -10,6 +10,7 @@ from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 import sys
 import datetime
+import requests
 
 # Minimal motion detector (no argparse). Configure constants below.
 SOURCE = 0            # camera index or video file path
@@ -35,6 +36,29 @@ root.withdraw()
 
 class Data:
     newData = False
+
+# https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m&timezone=America%2FChicago&forecast_days=1
+
+def getWeather():
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": 49.89,
+        "longitude": -97.13,
+        "current_weather": True,
+        "timezone": "America/Chicago",
+    }
+    try:
+        r = requests.get(url, params=params, timeout=5)
+        r.raise_for_status()
+        data = r.json()
+        temp = data.get("current_weather", {}).get("temperature")
+        if temp is None:
+            print("getWeather: no temperature in response", data)
+        else:
+            print(temp)
+    except Exception as e:
+        print("getWeather error:", e)
+getWeather()
 
 # i did this so that i can compare it below, it's only set once as a default
 oldTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
