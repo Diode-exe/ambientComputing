@@ -36,10 +36,18 @@ root.withdraw()
 class Data:
     newData = False
 
+# i did this so that i can compare it below, it's only set once as a default
+oldTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
+
+# def 
+
 def getTimeToDisplay():
-    currentTime = str(datetime.datetime.now().replace(microsecond=0))
+    currentTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
     timeVar.set(currentTime)
-    Data.newData = True
+    global oldTime
+    if currentTime != oldTime:
+        Data.newData = True
+        oldTime = currentTime
 
 # Get audio endpoint volume if available
 def listenForAck():
@@ -80,6 +88,7 @@ def listenForAck():
                 print(text)
                 if "acknowledge" in text or "acknowledged" in text:
                     show_withdraw_event.set()
+                    Data.newData = False
         except Exception as e:
             print(e)
     finally:
@@ -192,6 +201,7 @@ def _poll_fullscreen():
         except Exception:
             pass
         show_fullscreen_event.clear()
+        Data.newData = False
     root.after(200, _poll_fullscreen)
 
 def _poll_withdraw():
@@ -204,8 +214,8 @@ def _poll_withdraw():
     root.after(200, _poll_withdraw)
 
 timeVar = tk.StringVar(value="time")
-timeLabel = tk.Label(root, textvariable=timeVar)
-timeLabel.pack()
+timeLabel = tk.Label(root, textvariable=timeVar, fg='white', bg='black', font=('Helvetica', 96))
+timeLabel.pack(expand=True)
 
 if __name__ == '__main__':
     # start polling GUI events before launching worker
