@@ -111,7 +111,6 @@ def getTimeToDisplay():
         Data.newData = True
         oldTime = currentTime
 
-# Get audio endpoint volume if available
 def listenForAck():
     # CoInitialize COM for this thread (required by WMI/pywin32)
     try:
