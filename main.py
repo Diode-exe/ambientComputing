@@ -35,26 +35,6 @@ def listenForAck():
         pythoncom.CoInitialize()
     except Exception:
         pass
-    try:
-        try:
-            devices = AudioUtilities.GetSpeakers()
-            if hasattr(devices, "Activate"):
-                interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-                volume = cast(interface, POINTER(IAudioEndpointVolume))
-            else:
-                volume = None
-        except Exception:
-            volume = None
-
-        try:
-            c = wmi.WMI()
-        except Exception:
-            c = None
-
-        try:
-            t = wmi.WMI(moniker="//./root/wmi")
-        except Exception:
-            t = None
 
         r = sr.Recognizer()
 
