@@ -39,7 +39,49 @@ class Data:
 # i did this so that i can compare it below, it's only set once as a default
 oldTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
 
-# def 
+def fadeInWindow():
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.1)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.2)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.3)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.4)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.5)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.6)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.7)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.8)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.9)
+    time.sleep(0.5)
+    root.attributes('-alpha', 1.0)
+
+def fadeOutWindow():
+    time.sleep(0.5)
+    root.attributes('-alpha', 1.0)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.9)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.8)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.7)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.6)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.5)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.4)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.3)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.2)
+    time.sleep(0.5)
+    root.attributes('-alpha', 0.1)
 
 def getTimeToDisplay():
     currentTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
@@ -196,6 +238,7 @@ def _poll_fullscreen():
         try:
             root.deiconify()
             root.attributes("-fullscreen", True)
+            fadeInWindow()
             root.lift()
             root.focus_force()
         except Exception:
@@ -207,6 +250,7 @@ def _poll_fullscreen():
 def _poll_withdraw():
     if show_withdraw_event.is_set():
         try:
+            fadeOutWindow()
             root.withdraw()
         except Exception:
             pass
