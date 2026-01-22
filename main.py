@@ -12,6 +12,7 @@ import sys
 import datetime
 import requests
 import random
+import pywinstyles
 
 # Minimal motion detector (no argparse). Configure constants below.
 SOURCE = 0            # camera index or video file path
@@ -365,9 +366,54 @@ def _poll_withdraw():
         show_withdraw_event.clear()
     root.after(200, _poll_withdraw)
 
+def increaseOpacityFrame(stuffFrame):
+    # Source - https://stackoverflow.com/a/77850151
+    # Posted by Akascape, modified by community. See post 'Timeline' for change history
+    # Retrieved 2026-01-21, License - CC BY-SA 4.0
+
+    pywinstyles.set_opacity(stuffFrame, 0.1, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.2, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.3, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.4, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.5, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.6, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.7, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.8, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.9, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 1.0, color=None)
+
+def decreaseOpacityFrame(stuffFrame):
+    pywinstyles.set_opacity(stuffFrame, 1.0, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.9, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.8, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.7, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.6, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.5, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.4, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.3, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.2, color=None)
+    time.sleep(0.5)
+    pywinstyles.set_opacity(stuffFrame, 0.1, color=None)
+
 def moveStuffFrame(stuffFrame):
     stuffFrame.place_forget()
-
     # Get frame size
     stuffFrame.update_idletasks()
     frame_width = stuffFrame.winfo_width()
@@ -377,19 +423,26 @@ def moveStuffFrame(stuffFrame):
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
 
-    # Calculate valid position
-    max_x = screen_width - frame_width
-    max_y = screen_height - frame_height
+    # Calculate valid position (ensure non-negative)
+    max_x = max(0, screen_width - frame_width)
+    max_y = max(0, screen_height - frame_height)
+
+    # Choose a random position so the frame stays fully within the screen
     new_x = random.randint(0, max_x)
     new_y = random.randint(0, max_y)
 
+    decreaseOpacityFrame(stuffFrame)
+
     stuffFrame.place(x=new_x, y=new_y)
-    root.after(120000, lambda: moveStuffFrame(stuffFrame))
+
+    increaseOpacityFrame(stuffFrame)
+    root.after(5000, lambda: moveStuffFrame(stuffFrame))
 
 stuffFrame = tk.Frame(root)
 stuffFrame.configure(bg="black")
+stuffFrame.place(x=0, y=0)
 
-moveStuffFrame(stuffFrame)
+root.after(5000, lambda: moveStuffFrame(stuffFrame))
 
 timeVar = tk.StringVar(value="time")
 timeLabel = tk.Label(stuffFrame, textvariable=timeVar, fg='white', bg='black', font=('Helvetica', 72))
