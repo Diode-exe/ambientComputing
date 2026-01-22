@@ -52,25 +52,25 @@ root.withdraw()
 class Data:
     newData = False
 
-def get_api_value(key, default=None):
-    apifilename = "txt/api.txt"
-    try:
-        with open(apifilename, "r") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith(f"{key}:"):
-                    value = line.split(":", 1)[1].strip()
-                    # Try to convert to int if possible
-                    if value.isdigit():
-                        return int(value)
-                    try:
-                        return float(value)  # handles decimal numbers
-                    except ValueError:
-                        return value  # fallback to raw string
-    except FileNotFoundError:
-        logging.error(f"File {apifilename} not found")
-        return default
-    return default
+# def get_api_value(key, default=None):
+#     apifilename = "txt/api.txt"
+#     try:
+#         with open(apifilename, "r") as f:
+#             for line in f:
+#                 line = line.strip()
+#                 if line.startswith(f"{key}:"):
+#                     value = line.split(":", 1)[1].strip()
+#                     # Try to convert to int if possible
+#                     if value.isdigit():
+#                         return int(value)
+#                     try:
+#                         return float(value)  # handles decimal numbers
+#                     except ValueError:
+#                         return value  # fallback to raw string
+#     except FileNotFoundError:
+#         logging.error(f"File {apifilename} not found")
+#         return default
+#     return default
 
 def getWeather(weatherVar):
     def _fetch():
