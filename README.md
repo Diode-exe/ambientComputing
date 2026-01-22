@@ -31,3 +31,7 @@ This is not an easy program to run! The face recognition makes OpenCV choppy eve
 ### This is not completely local
 
 Some parts of this program use online APIs, such as the TTS system. Be aware of this if you are concerned about privacy. The face recognition is completely local, however.
+
+### Constants.py
+
+This file contains constants, such as controlling delays between screen changes, and coordinates for the weather.
