@@ -1,7 +1,6 @@
 # style: no comments, self-explanatory code
 
 try:
-    import logging
     import time
     import threading
     import tkinter as tk
