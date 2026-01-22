@@ -1,5 +1,3 @@
 api.txt
-models/face_recognizer.yml
-models/labels.json
-dataset/*
-!dataset/.gitkeep
+models
+dataset/Rohan
