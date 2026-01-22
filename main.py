@@ -101,6 +101,9 @@ oldTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
 def fadeInWindow():
     time.sleep(FADE_DELAY)
     root.update()
+    root.attributes('-alpha', 0.0)
+    time.sleep(FADE_DELAY)
+    root.update()
     root.attributes('-alpha', 0.1)
     time.sleep(FADE_DELAY)
     root.update()
@@ -163,6 +166,9 @@ def fadeOutWindow():
     time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.1)
+    time.sleep(FADE_DELAY)
+    root.update()
+    root.attributes('-alpha', 0.0)
     global fadedIn
     fadedIn = False
 
