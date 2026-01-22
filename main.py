@@ -413,7 +413,7 @@ def _poll_withdraw():
 #     # Posted by Akascape, modified by community. See post 'Timeline' for change history
 #     # Retrieved 2026-01-21, License - CC BY-SA 4.0
 
-def increaseOpacityFrame():
+def increaseOpacityFrame(stuffFrame):
     n = 0.01
     while n != 1.0:
         n += 0.01
@@ -421,14 +421,13 @@ def increaseOpacityFrame():
         root.update()
         time.sleep(FADE_DELAY)
 
-def decreaseOpacityFrame():
+def decreaseOpacityFrame(stuffFrame):
     n = 1.0
     while n != 0.01:
         n -= 0.01
         pywinstyles.set_opacity(stuffFrame, n, color=None)
         root.update()
         time.sleep(FADE_DELAY)
-
 
 def moveStuffFrame(stuffFrame):
     stuffFrame.update_idletasks()
