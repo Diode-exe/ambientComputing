@@ -31,7 +31,6 @@ try:
         RECOGNITION_CONF_THRESHOLD,
         TIMEZONE
     )
-
 except ImportError as e:
     print(f"You're missing a package. Install with pip. {e}")
 
@@ -47,6 +46,7 @@ root = tk.Tk()
 width = root.winfo_screenwidth()
 height = root.winfo_screenheight()
 root.geometry(f"{width}x{height}")
+
 # Source - https://stackoverflow.com/a/2745312
 # Posted by msw
 # Retrieved 2026-01-20, License - CC BY-SA 2.5
@@ -122,78 +122,20 @@ def start_fetch_thread():
 oldTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
 
 def fadeInWindow():
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.0)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.1)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.2)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.3)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.4)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.5)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.6)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.7)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.8)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.9)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 1.0)
-    global fadedIn
-    fadedIn = True
+    n = 0.01
+    while n != 1.0:
+        n += 0.01
+        root.attributes('-alpha', n)
+        root.update()
+        time.sleep(FADE_DELAY)
 
 def fadeOutWindow():
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 1.0)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.9)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.8)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.7)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.6)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.5)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.4)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.3)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.2)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.1)
-    time.sleep(FADE_DELAY)
-    root.update()
-    root.attributes('-alpha', 0.0)
-    global fadedIn
-    fadedIn = False
+    n = 1.0
+    while n != 0.01:
+        n -= 0.01
+        root.attributes('-alpha', n)
+        root.update()
+        time.sleep(FADE_DELAY)
 
 def getTimeToDisplay():
     currentTime = str(datetime.datetime.now().strftime("%Y-%m-%d \n %H:%M:%S"))
