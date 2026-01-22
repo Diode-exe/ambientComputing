@@ -12,3 +12,5 @@ This has crashed my computer and I don't know why, so be careful.
 ### Quirks
 
 For some reason, if you stop the program in the middle of the fade transition, it'll raise a ValueError
+
+Saying acknowledge will dismiss the window for 200 frames. I need to make it so that there is new data, maybe
