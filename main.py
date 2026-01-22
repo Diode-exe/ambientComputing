@@ -471,6 +471,11 @@ def increaseOpacityFrame(stuffFrame):
     # Posted by Akascape, modified by community. See post 'Timeline' for change history
     # Retrieved 2026-01-21, License - CC BY-SA 4.0
 
+    # why does this raise ValueError if a KeyboardInterrupt 
+    # is caught during this function or the next one???
+
+    # also I could do this with a for loop but I won't
+
     pywinstyles.set_opacity(stuffFrame, 0.0, color=None)
     root.update()
     time.sleep(0.5)

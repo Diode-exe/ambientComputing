@@ -27,3 +27,7 @@ navigate to your project folder in your terminal. It will train, and then you ca
 ### Warning
 
 This is not an easy program to run! The face recognition makes OpenCV choppy even on my laptop with a Core Ultra 9 185H! You have been warned!
+
+### This is not completely local
+
+Some parts of this program use online APIs, such as the TTS system. Be aware of this if you are concerned about privacy. The face recognition is completely local, however.
