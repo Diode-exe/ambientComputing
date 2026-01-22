@@ -1,3 +1,5 @@
+# style: no comments, self-explanatory code
+
 try:
     import time
     import threading
@@ -31,7 +33,6 @@ global fadedIn
 
 fadedIn = False
 
-# Event used to request fullscreen from the GUI/main thread
 show_fullscreen_event = threading.Event()
 show_withdraw_event = threading.Event()
 stop = threading.Event()
@@ -51,7 +52,6 @@ class Data:
     newData = False
 
 def getWeather(weatherVar):
-    # Run network I/O on a background thread and update Tkinter from main thread.
     def _fetch():
         url = "https://api.open-meteo.com/v1/forecast"
         params = {
@@ -73,15 +73,12 @@ def getWeather(weatherVar):
         except Exception as e:
             print("getWeather error:", e)
 
-        # Schedule the UI update on the main thread.
         try:
             root.after(0, lambda: weatherVar.set
                        (f"The temperature at {LAT}, {LONG} is \n {temp if temp is not None else 'N/A'}C°"))
         except Exception:
-            # If scheduling fails, ignore — main thread may be shutting down.
             pass
 
-        # Schedule next fetch via the main loop (safe) by starting another background thread
         try:
             root.after(60000, start_fetch_thread)
         except Exception:
@@ -92,7 +89,6 @@ def getWeather(weatherVar):
 
 
 def start_fetch_thread():
-    # Helper to kick off a single background weather fetch.
     return getWeather(weatherVar)
 
 # i did this so that i can compare it below, it's only set once as a default
@@ -452,26 +448,20 @@ def decreaseOpacityFrame(stuffFrame):
     root.update()
 
 def moveStuffFrame(stuffFrame):
-    # Get frame size
     stuffFrame.update_idletasks()
     frame_width = stuffFrame.winfo_width()
     frame_height = stuffFrame.winfo_height()
 
-    # Get screen size
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
 
-    # Calculate valid position (ensure non-negative)
     max_x = max(0, screen_width - frame_width)
     max_y = max(0, screen_height - frame_height)
 
-    # Choose a random position so the frame stays fully within the screen
     new_x = random.randint(0, max_x)
     new_y = random.randint(0, max_y)
-    # Fade out while the frame is still visible, then move and fade in.
     decreaseOpacityFrame(stuffFrame)
 
-    # Hide briefly, move to new location, then fade back in.
     stuffFrame.place_forget()
     stuffFrame.place(x=new_x, y=new_y)
 
