@@ -17,6 +17,8 @@ try:
     import requests
     import random
     import pywinstyles
+    import os
+    import json
 except ImportError as e:
     print(f"You're missing a package. Install with pip. {e}")
 
@@ -29,6 +31,10 @@ LAT = 49.89
 LONG = -97.13
 
 FADE_DELAY = 0.5
+
+MODEL_PATH = os.path.join("models", "face_recognizer.yml")
+LABELS_PATH = os.path.join("models", "labels.json")
+RECOGNITION_CONF_THRESHOLD = 70
 
 global fadedIn
 
@@ -295,6 +301,30 @@ def openCVMain():
     morph_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
 
     print("Starting motion detection. Press 'q' in the window to quit.")
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    recognizer = None
+    labels = {}
+    try:
+        if hasattr(cv2, 'face') and os.path.exists(MODEL_PATH):
+            recognizer = cv2.face.LBPHFaceRecognizer_create()
+            recognizer.read(MODEL_PATH)
+        elif hasattr(cv2, 'face') and not os.path.exists(MODEL_PATH):
+            print('Face recognizer model not found at', MODEL_PATH)
+        else:
+            print('cv2.face module not available; skipping face recognition')
+    except Exception as e:
+        print('Error loading recognizer:', e)
+
+    try:
+        if os.path.exists(LABELS_PATH):
+            with open(LABELS_PATH, 'r', encoding='utf-8') as f:
+                labels = json.load(f)
+                # labels expected as {"1": "Alice", "2": "Bob"}
+    except Exception:
+        labels = {}
+
+    openCVMain.last_seen = None
+    openCVMain.last_seen_time = 0
     try:
         while not stop.is_set():
             ret, frame = cap.read()
@@ -303,6 +333,47 @@ def openCVMain():
 
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             gray = cv2.GaussianBlur(gray, (21, 21), 0)
+
+            # face detection/recognition
+            try:
+                faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(60, 60))
+            except Exception:
+                faces = ()
+
+            for (fx, fy, fw, fh) in faces:
+                try:
+                    face_roi = gray[fy:fy+fh, fx:fx+fw]
+                    face_resized = cv2.resize(face_roi, (200, 200))
+                except Exception:
+                    continue
+
+                if recognizer is not None:
+                    try:
+                        label_id, confidence = recognizer.predict(face_resized)
+                    except Exception:
+                        label_id, confidence = None, None
+                    name = None
+                    if label_id is not None and confidence is not None:
+                        if str(label_id) in labels:
+                            name = labels.get(str(label_id))
+                        else:
+                            name = f"id:{label_id}"
+                    if name and confidence is not None and confidence < RECOGNITION_CONF_THRESHOLD:
+                        cv2.putText(frame, f"{name} ({int(confidence)})", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
+                        cv2.rectangle(frame, (fx, fy), (fx+fw, fy+fh), (0, 255, 0), 2)
+                        now = time.time()
+                        if openCVMain.last_seen != name or (now - openCVMain.last_seen_time) > 5:
+                            openCVMain.last_seen = name
+                            openCVMain.last_seen_time = now
+                            try:
+                                root.after(0, lambda n=name: userVar.set(f"Welcome, {n}"))
+                            except Exception:
+                                pass
+                            show_fullscreen_event.set()
+                    else:
+                        cv2.putText(frame, "Unknown", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
+                        cv2.rectangle(frame, (fx, fy), (fx+fw, fy+fh), (0, 0, 255), 2)
+
 
             if background is None:
                 background = gray.astype("float")
@@ -507,6 +578,10 @@ global weatherLabel, weatherVar
 weatherVar = tk.StringVar(value="weather")
 weatherLabel = tk.Label(stuffFrame, textvariable=weatherVar, fg='white', bg='black', font=('Helvetica', 60))
 weatherLabel.pack(expand=True)
+
+userVar = tk.StringVar(value="user")
+userLabel = tk.Label(stuffFrame, textvariable=userVar, fg='white', bg='black', font=('Helvetica', 60))
+userLabel.pack(expand=True)
 
 if __name__ == '__main__':
     root.after(200, _poll_fullscreen)

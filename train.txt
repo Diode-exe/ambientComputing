@@ -1,0 +1,1 @@
+python train_faces.py --dataset dataset --model models/face_recognizer.yml --labels models/labels.json

@@ -1,1 +1,5 @@
 api.txt
+haarcascade_frontalface_default.xml
+models/face_recognizer.yml
+models/labels.json
+dataset
