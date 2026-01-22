@@ -409,82 +409,26 @@ def _poll_withdraw():
         show_withdraw_event.clear()
     root.after(200, _poll_withdraw)
 
-def increaseOpacityFrame(stuffFrame):
-    # Source - https://stackoverflow.com/a/77850151
-    # Posted by Akascape, modified by community. See post 'Timeline' for change history
-    # Retrieved 2026-01-21, License - CC BY-SA 4.0
+#     # Source - https://stackoverflow.com/a/77850151
+#     # Posted by Akascape, modified by community. See post 'Timeline' for change history
+#     # Retrieved 2026-01-21, License - CC BY-SA 4.0
 
-    # why does this raise ValueError if a KeyboardInterrupt 
-    # is caught during this function or the next one???
+def increaseOpacityFrame():
+    n = 0.01
+    while n != 1.0:
+        n += 0.01
+        pywinstyles.set_opacity(stuffFrame, n, color=None)
+        root.update()
+        time.sleep(FADE_DELAY)
 
-    # also I could do this with a for loop but I won't
+def decreaseOpacityFrame():
+    n = 1.0
+    while n != 0.01:
+        n -= 0.01
+        pywinstyles.set_opacity(stuffFrame, n, color=None)
+        root.update()
+        time.sleep(FADE_DELAY)
 
-    pywinstyles.set_opacity(stuffFrame, 0.0, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.1, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.2, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.3, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.4, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.5, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.6, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.7, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.8, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.9, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 1.0, color=None)
-    root.update()
-
-def decreaseOpacityFrame(stuffFrame):
-    pywinstyles.set_opacity(stuffFrame, 1.0, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.9, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.8, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.7, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.6, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.5, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.4, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.3, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.2, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.1, color=None)
-    root.update()
-    time.sleep(0.5)
-    pywinstyles.set_opacity(stuffFrame, 0.0, color=None)
-    root.update()
 
 def moveStuffFrame(stuffFrame):
     stuffFrame.update_idletasks()

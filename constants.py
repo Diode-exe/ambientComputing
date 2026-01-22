@@ -8,7 +8,7 @@ MIN_CONSECUTIVE = 3
 LAT = 49.89
 LONG = -97.13
 
-FADE_DELAY = 0.01  # seconds
+FADE_DELAY = 0.05  # seconds
 
 MODEL_PATH = os.path.join("models", "face_recognizer.yml")
 LABELS_PATH = os.path.join("models", "labels.json")
