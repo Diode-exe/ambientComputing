@@ -18,22 +18,21 @@ try:
     import pywinstyles
     import os
     import json
+    from constants import (
+        SOURCE,
+        MIN_AREA,
+        DISPLAY,
+        MIN_CONSECUTIVE,
+        LAT,
+        LONG,
+        FADE_DELAY,
+        MODEL_PATH,
+        LABELS_PATH,
+        RECOGNITION_CONF_THRESHOLD
+    )
+
 except ImportError as e:
     print(f"You're missing a package. Install with pip. {e}")
-
-SOURCE = 0
-MIN_AREA = 500
-DISPLAY = True
-MIN_CONSECUTIVE = 3
-
-LAT = 49.89
-LONG = -97.13
-
-FADE_DELAY = 0.5
-
-MODEL_PATH = os.path.join("models", "face_recognizer.yml")
-LABELS_PATH = os.path.join("models", "labels.json")
-RECOGNITION_CONF_THRESHOLD = 30
 
 global fadedIn
 
