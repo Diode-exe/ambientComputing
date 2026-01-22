@@ -1,0 +1,8 @@
+comtypes==1.4.14
+opencv_python==4.12.0.88
+pycaw==20251023
+pywin32==311
+pywinstyles==1.8
+Requests==2.32.5
+speechrecognition==3.14.5
+WMI==1.5.1

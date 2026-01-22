@@ -1,24 +1,31 @@
-import time
-import threading
-import tkinter as tk
-import cv2
-import speech_recognition as sr
-import wmi
-import pythoncom
-from ctypes import cast, POINTER
-from comtypes import CLSCTX_ALL
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-import sys
-import datetime
-import requests
-import random
-import pywinstyles
+try:
+    import time
+    import threading
+    import tkinter as tk
+    import cv2
+    import speech_recognition as sr
+    import wmi
+    import pythoncom
+    from ctypes import cast, POINTER
+    from comtypes import CLSCTX_ALL
+    from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+    import sys
+    import datetime
+    import requests
+    import random
+    import pywinstyles
+except ImportError as e:
+    print(f"You're missing a package. Install with pip. {e}")
 
-# Minimal motion detector (no argparse). Configure constants below.
-SOURCE = 0            # camera index or video file path
-MIN_AREA = 500        # minimum contour area to consider motion
+SOURCE = 0
+MIN_AREA = 500
 DISPLAY = True
-MIN_CONSECUTIVE = 3   # require motion for this many consecutive frames before reporting
+MIN_CONSECUTIVE = 3
+
+LAT = 49.89
+LONG = -97.13
+
+FADE_DELAY = 0.5
 
 global fadedIn
 
@@ -45,13 +52,11 @@ class Data:
 
 def getWeather(weatherVar):
     # Run network I/O on a background thread and update Tkinter from main thread.
-    lat = 49.89
-    long = -97.13
     def _fetch():
         url = "https://api.open-meteo.com/v1/forecast"
         params = {
-            "latitude": lat,
-            "longitude": long,
+            "latitude": LAT,
+            "longitude": LONG,
             "current_weather": True,
             "timezone": "America/Chicago",
         }
@@ -71,7 +76,7 @@ def getWeather(weatherVar):
         # Schedule the UI update on the main thread.
         try:
             root.after(0, lambda: weatherVar.set
-                       (f"The temperature at {lat}, {long} is \n {temp if temp is not None else 'N/A'}C°"))
+                       (f"The temperature at {LAT}, {LONG} is \n {temp if temp is not None else 'N/A'}C°"))
         except Exception:
             # If scheduling fails, ignore — main thread may be shutting down.
             pass
@@ -94,68 +99,68 @@ def start_fetch_thread():
 oldTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
 
 def fadeInWindow():
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.1)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.2)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.3)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.4)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.5)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.6)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.7)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.8)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.9)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 1.0)
     global fadedIn
     fadedIn = True
 
 def fadeOutWindow():
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 1.0)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.9)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.8)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.7)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.6)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.5)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.4)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.3)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.2)
-    time.sleep(0.5)
+    time.sleep(FADE_DELAY)
     root.update()
     root.attributes('-alpha', 0.1)
     global fadedIn
