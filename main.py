@@ -380,7 +380,7 @@ def openCVMain():
                     openCVMain.consec_no_motion = 0
 
             getTimeToDisplay()
-            
+
             # if getattr(openCVMain, "consec_no_motion", 0) <= 200:
             #     if not show_withdraw_event.is_set():
             #         print("Not at threshold - withdrawing")
