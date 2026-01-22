@@ -56,6 +56,7 @@ root.withdraw()
 class Data:
     newData = False
 
+# this will eventually be used for news
 # def get_api_value(key, default=None):
 #     apifilename = "txt/api.txt"
 #     try:
