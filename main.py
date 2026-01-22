@@ -28,7 +28,8 @@ try:
         FADE_DELAY,
         MODEL_PATH,
         LABELS_PATH,
-        RECOGNITION_CONF_THRESHOLD
+        RECOGNITION_CONF_THRESHOLD,
+        TIMEZONE
     )
 
 except ImportError as e:
@@ -84,7 +85,7 @@ def getWeather(weatherVar):
             "latitude": LAT,
             "longitude": LONG,
             "current_weather": True,
-            "timezone": "America/Chicago",
+            "timezone": TIMEZONE,
         }
         temp = None
         try:
