@@ -57,6 +57,13 @@ root.withdraw()
 class Data:
     newData = False
 
+# print(# Source - https://stackoverflow.com/a/1594451
+# # Posted by Marcin Augustyniak, modified by community. See post 'Timeline' for change history
+# # Retrieved 2026-01-22, License - CC BY-SA 4.0
+
+# os.getlogin()
+# )
+
 # this will eventually be used for news
 # def get_api_value(key, default=None):
 #     apifilename = "txt/api.txt"
@@ -448,13 +455,13 @@ def moveStuffFrame(stuffFrame):
     stuffFrame.place(x=new_x, y=new_y)
 
     increaseOpacityFrame(stuffFrame)
-    root.after(20000, lambda: moveStuffFrame(stuffFrame))
+    root.after(35000, lambda: moveStuffFrame(stuffFrame))
 
 stuffFrame = tk.Frame(root)
 stuffFrame.configure(bg="black")
 stuffFrame.place(x=0, y=0)
 
-root.after(20000, lambda: moveStuffFrame(stuffFrame))
+root.after(35000, lambda: moveStuffFrame(stuffFrame))
 
 timeVar = tk.StringVar(value="time")
 timeLabel = tk.Label(stuffFrame, textvariable=timeVar, fg='white', bg='black', font=('Helvetica', 60))
@@ -469,7 +476,7 @@ weatherVar = tk.StringVar(value="weather")
 weatherLabel = tk.Label(stuffFrame, textvariable=weatherVar, fg='white', bg='black', font=('Helvetica', 60))
 weatherLabel.pack(expand=True)
 
-userVar = tk.StringVar(value="user")
+userVar = tk.StringVar(value=f"Welcome, {os.getlogin()} (logged on user)")
 userLabel = tk.Label(stuffFrame, textvariable=userVar, fg='white', bg='black', font=('Helvetica', 60))
 userLabel.pack(expand=True)
 
