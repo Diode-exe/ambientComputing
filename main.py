@@ -498,7 +498,6 @@ weatherLabel = tk.Label(stuffFrame, textvariable=weatherVar, fg='white', bg='bla
 weatherLabel.pack(expand=True)
 
 if __name__ == '__main__':
-    # start polling GUI events before launching worker
     root.after(200, _poll_fullscreen)
     root.after(200, _poll_withdraw)
     captureThread = threading.Thread(target=openCVMain, daemon=True)
@@ -506,7 +505,6 @@ if __name__ == '__main__':
     captureThread.start()
     listenThread.start()
 
-    # Start the periodic weather fetch on a background thread (UI updates scheduled on main thread)
     start_fetch_thread()
 
     def _on_close():
