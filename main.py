@@ -45,11 +45,13 @@ class Data:
 
 def getWeather(weatherVar):
     # Run network I/O on a background thread and update Tkinter from main thread.
+    lat = 49.89
+    long = -97.13
     def _fetch():
         url = "https://api.open-meteo.com/v1/forecast"
         params = {
-            "latitude": 49.89,
-            "longitude": -97.13,
+            "latitude": lat,
+            "longitude": long,
             "current_weather": True,
             "timezone": "America/Chicago",
         }
@@ -69,7 +71,7 @@ def getWeather(weatherVar):
         # Schedule the UI update on the main thread.
         try:
             root.after(0, lambda: weatherVar.set
-                       (f"The temperature is {temp if temp is not None else 'N/A'}C°"))
+                       (f"The temperature at {lat}, {long} is \n {temp if temp is not None else 'N/A'}C°"))
         except Exception:
             # If scheduling fails, ignore — main thread may be shutting down.
             pass
@@ -472,16 +474,16 @@ stuffFrame.place(x=0, y=0)
 root.after(20000, lambda: moveStuffFrame(stuffFrame))
 
 timeVar = tk.StringVar(value="time")
-timeLabel = tk.Label(stuffFrame, textvariable=timeVar, fg='white', bg='black', font=('Helvetica', 72))
+timeLabel = tk.Label(stuffFrame, textvariable=timeVar, fg='white', bg='black', font=('Helvetica', 60))
 timeLabel.pack(expand=True)
 
 dotwVar = tk.StringVar(value="dotw")
-dotwLabel = tk.Label(stuffFrame, textvariable=dotwVar, fg='white', bg='black', font=('Helvetica', 72))
+dotwLabel = tk.Label(stuffFrame, textvariable=dotwVar, fg='white', bg='black', font=('Helvetica', 60))
 dotwLabel.pack(expand=True)
 
 global weatherLabel, weatherVar
 weatherVar = tk.StringVar(value="weather")
-weatherLabel = tk.Label(stuffFrame, textvariable=weatherVar, fg='white', bg='black', font=('Helvetica', 72))
+weatherLabel = tk.Label(stuffFrame, textvariable=weatherVar, fg='white', bg='black', font=('Helvetica', 60))
 weatherLabel.pack(expand=True)
 
 if __name__ == '__main__':
