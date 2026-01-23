@@ -422,7 +422,7 @@ def _poll_withdraw():
 
 def increaseOpacityFrame(stuffFrame):
     n = 0.01
-    while n != 1.0:
+    while not n >= 1.0:
         n += 0.01
         pywinstyles.set_opacity(stuffFrame, n, color=None)
         root.update()
@@ -430,7 +430,7 @@ def increaseOpacityFrame(stuffFrame):
 
 def decreaseOpacityFrame(stuffFrame):
     n = 1.0
-    while n != 0.01:
+    while not n <= 0.01:
         n -= 0.01
         pywinstyles.set_opacity(stuffFrame, n, color=None)
         root.update()
