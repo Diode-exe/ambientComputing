@@ -34,10 +34,13 @@ try:
         MODEL_PATH,
         LABELS_PATH,
         RECOGNITION_CONF_THRESHOLD,
-        TIMEZONE
+        TIMEZONE,
+        FACE_RECOGNITION_ENABLED
     )
 except ImportError as e:
     logger.error("You're missing a package. Install with pip. %s", e)
+
+face_recognition_enabled = FACE_RECOGNITION_ENABLED
 
 global fadedIn
 
@@ -143,6 +146,7 @@ def fadeInWindow():
         root.attributes('-alpha', n)
         root.update()
         time.sleep(FADE_DELAY)
+    fadedIn = True
 
 def fadeOutWindow():
     n = 1.0
@@ -151,6 +155,7 @@ def fadeOutWindow():
         root.attributes('-alpha', n)
         root.update()
         time.sleep(FADE_DELAY)
+    fadedIn = False
 
 def getTimeToDisplay():
     currentTime = str(datetime.datetime.now().strftime("%Y-%m-%d \n %H:%M:%S"))
@@ -266,14 +271,16 @@ def openCVMain():
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     recognizer = None
     labels = {}
+    # initial load only if opt-in enabled
     try:
-        if hasattr(cv2, 'face') and os.path.exists(MODEL_PATH):
-            recognizer = cv2.face.LBPHFaceRecognizer_create()
-            recognizer.read(MODEL_PATH)
-        elif hasattr(cv2, 'face') and not os.path.exists(MODEL_PATH):
-            logger.warning('Face recognizer model not found at %s', MODEL_PATH)
-        else:
-            logger.warning('cv2.face module not available; skipping face recognition')
+        if face_recognition_enabled:
+            if hasattr(cv2, 'face') and os.path.exists(MODEL_PATH):
+                recognizer = cv2.face.LBPHFaceRecognizer_create()
+                recognizer.read(MODEL_PATH)
+            elif hasattr(cv2, 'face') and not os.path.exists(MODEL_PATH):
+                logger.warning('Face recognizer model not found at %s', MODEL_PATH)
+            else:
+                logger.warning('cv2.face module not available; skipping face recognition')
     except Exception as e:
         logger.error('Error loading recognizer: %s', e)
 
@@ -303,6 +310,19 @@ def openCVMain():
             except cv2.error as e:
                 logger.debug("face_cascade.detectMultiScale failed: %s", e)
                 faces = ()
+
+            # dynamically load/unload recognizer based on runtime opt-in
+            if face_recognition_enabled and recognizer is None:
+                try:
+                    if hasattr(cv2, 'face') and os.path.exists(MODEL_PATH):
+                        recognizer = cv2.face.LBPHFaceRecognizer_create()
+                        recognizer.read(MODEL_PATH)
+                        logger.info('Loaded face recognizer at runtime')
+                except Exception as e:
+                    logger.error('Error loading recognizer at runtime: %s', e)
+            elif not face_recognition_enabled and recognizer is not None:
+                recognizer = None
+                logger.info('Unloaded face recognizer at runtime')
 
             for (fx, fy, fw, fh) in faces:
                 try:
@@ -523,9 +543,9 @@ if __name__ == '__main__':
         try:
             captureThread.join(timeout=2)
         except Exception:
-            pass
+            logging.error("Error joining captureThread", exc_info=True)
         try:
             listenThread.join(timeout=2)
         except Exception:
-            pass
+            logging.error("Error joining listenThread", exc_info=True)
         sys.exit()
