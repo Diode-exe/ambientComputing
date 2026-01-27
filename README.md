@@ -35,3 +35,7 @@ Some parts of this program use online APIs, such as the TTS system. Be aware of 
 ### Constants.py
 
 This file contains constants, such as controlling delays between screen changes, and coordinates for the weather.
+
+### Operating System Compatibility
+
+Windows only, unfortunately.
