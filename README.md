@@ -34,6 +34,7 @@ python main.py
 Files of interest
 
 - `main.py`: main application (motion detection, face recognition, UI, speech listen).
+- `train.txt`: command to train face recognition model with default paths.
 - `train_faces.py`: prepares dataset and trains an LBPH model; writes model and `labels.json`.
 - `constants.py`: runtime configuration (paths, thresholds, time zone, coordinates).
 
@@ -54,7 +55,6 @@ Privacy and networking
 
 Troubleshooting
 
-- If the app crashes during fade transitions, avoid terminating while fading; ensure graceful shutdown.
 - If face recognition never identifies anyone:
 - Confirm `models/face_recognizer.yml` and `models/labels.json` exist and paths in `constants.py` are correct.
 - Run `train_faces.py` with a properly structured `dataset/` folder.
