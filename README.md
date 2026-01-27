@@ -38,4 +38,4 @@ This file contains constants, such as controlling delays between screen changes,
 
 ### Operating System Compatibility
 
-Windows only, unfortunately.
+Windows only
