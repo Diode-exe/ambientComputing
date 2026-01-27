@@ -361,6 +361,7 @@ def openCVMain():
                             # show_fullscreen_event.set()
                     else:
                         cv2.putText(frame, "Unknown", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
+                        userVar.set(f"Welcome, {os.getlogin()} (logged on user)")
                         cv2.rectangle(frame, (fx, fy), (fx+fw, fy+fh), (0, 0, 255), 2)
 
             if background is None:
