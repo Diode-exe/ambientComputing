@@ -24,6 +24,12 @@ Great question. You need to have a folder structure of ```projectFolder/dataset/
 It doesn't have to be a .jpg file, as long as it's a picture. Then run the command in train.txt, making sure to
 navigate to your project folder in your terminal. It will train, and then you can run main.py.
 
+You can edit constants.py to change settings, such as the timezone and whether face recognition is enabled.
+
+```pip install -r requirements.txt``` to install dependencies.
+
+Copy and paste train.txt into the terminal to train the model. You need a lot of pictures of each person for it to work well. Make sure to cd to the project folder first! You don't have to do this every time, only when you add new people or want to retrain, but you do need to do it at least once. You also don't have to do it if you just want to run the program without face recognition.
+
 ### Warning
 
 This is not an easy program to run! The face recognition makes OpenCV choppy even on my laptop with a Core Ultra 9 185H! You have been warned!
