@@ -273,14 +273,15 @@ def openCVMain():
     labels = {}
     # initial load only if opt-in enabled
     try:
-        if face_recognition_enabled:
-            if hasattr(cv2, 'face') and os.path.exists(MODEL_PATH):
-                recognizer = cv2.face.LBPHFaceRecognizer_create()
-                recognizer.read(MODEL_PATH)
-            elif hasattr(cv2, 'face') and not os.path.exists(MODEL_PATH):
-                logger.warning('Face recognizer model not found at %s', MODEL_PATH)
-            else:
-                logger.warning('cv2.face module not available; skipping face recognition')
+            if face_recognition_enabled:
+                if hasattr(cv2, 'face') and os.path.exists(MODEL_PATH):
+                    recognizer = cv2.face.LBPHFaceRecognizer_create()
+                    recognizer.read(MODEL_PATH)
+                    logger.info('Loaded face recognizer model from %s', MODEL_PATH)
+                elif hasattr(cv2, 'face') and not os.path.exists(MODEL_PATH):
+                    logger.warning('Face recognizer model not found at %s', MODEL_PATH)
+                else:
+                    logger.warning('cv2.face module not available; skipping face recognition')
     except Exception as e:
         logger.error('Error loading recognizer: %s', e)
 
@@ -317,7 +318,7 @@ def openCVMain():
                     if hasattr(cv2, 'face') and os.path.exists(MODEL_PATH):
                         recognizer = cv2.face.LBPHFaceRecognizer_create()
                         recognizer.read(MODEL_PATH)
-                        logger.info('Loaded face recognizer at runtime')
+                        logger.info('Loaded face recognizer at runtime from %s', MODEL_PATH)
                 except Exception as e:
                     logger.error('Error loading recognizer at runtime: %s', e)
             elif not face_recognition_enabled and recognizer is not None:
@@ -335,17 +336,20 @@ def openCVMain():
                 if recognizer is not None:
                     try:
                         label_id, confidence = recognizer.predict(face_resized)
+                        # logger.info('predict -> id=%s conf=%s', label_id, confidence)
                     except cv2.error as e:
                         logger.debug("recognizer.predict failed: %s", e)
                         label_id, confidence = None, None
-                    name = None
-                    if label_id is not None and confidence is not None:
-                        if str(label_id) in labels:
-                            name = labels.get(str(label_id))
-                        else:
-                            name = f"id:{label_id}"
+
+                    name = labels.get(str(label_id)) if label_id is not None else None
+
+                    # display candidate name and confidence for debugging/visibility
+                    display_name = name if name is not None else (f"id:{label_id}" if label_id is not None else "Unknown")
+                    display_conf = int(confidence) if confidence is not None else 'N/A'
+                    cv2.putText(frame, f"{display_name} ({display_conf})", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0), 2)
+                    userVar.set(f"Welcome, {display_name}")
+
                     if name and confidence is not None and confidence < RECOGNITION_CONF_THRESHOLD:
-                        cv2.putText(frame, f"{name} ({int(confidence)})", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
                         cv2.rectangle(frame, (fx, fy), (fx+fw, fy+fh), (0, 255, 0), 2)
                         now = time.time()
                         if openCVMain.last_seen != name or (now - openCVMain.last_seen_time) > 5:
@@ -357,8 +361,8 @@ def openCVMain():
                                 logger.debug("failed to update userVar: %s", e)
                                 pass
                             show_fullscreen_event.set()
+
                     else:
-                        cv2.putText(frame, "Unknown", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
                         cv2.rectangle(frame, (fx, fy), (fx+fw, fy+fh), (0, 0, 255), 2)
 
 
