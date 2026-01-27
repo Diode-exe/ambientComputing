@@ -1,5 +1,10 @@
 # style: no comments, self-explanatory code
 
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+logger = logging.getLogger(__name__)
+
 try:
     import time
     import threading
@@ -32,7 +37,7 @@ try:
         TIMEZONE
     )
 except ImportError as e:
-    print(f"You're missing a package. Install with pip. {e}")
+    logger.error("You're missing a package. Install with pip. %s", e)
 
 global fadedIn
 
@@ -101,22 +106,24 @@ def getWeather(weatherVar):
             data = r.json()
             temp = data.get("current_weather", {}).get("temperature")
             if temp is None:
-                print("getWeather: no temperature in response", data)
+                logger.warning("getWeather: no temperature in response %s", data)
             else:
-                print(temp)
-        except Exception as e:
-            print("getWeather error:", e)
+                logger.info("Temperature: %s", temp)
+        except requests.RequestException as e:
+            logger.error("getWeather network error: %s", e)
+        except (ValueError, json.JSONDecodeError) as e:
+            logger.error("getWeather parse error: %s", e)
 
         try:
             root.after(0, lambda: weatherVar.set
                        (f"The temperature at {LAT}, {LONG} is \n {temp if temp is not None else 'N/A'}C°"))
-        except Exception:
-            pass
+        except tk.TclError as e:
+            logger.debug("getWeather: failed to update tkinter variable: %s", e)
 
         try:
             root.after(60000, start_fetch_thread)
-        except Exception:
-            pass
+        except tk.TclError as e:
+            logger.debug("getWeather: failed to schedule next fetch: %s", e)
 
     th = threading.Thread(target=_fetch, daemon=True)
     th.start()
@@ -158,8 +165,8 @@ def listenForAck():
     # CoInitialize COM for this thread (required by WMI/pywin32)
     try:
         pythoncom.CoInitialize()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("pythoncom.CoInitialize: %s", e)
     try:
         try:
             devices = AudioUtilities.GetSpeakers()
@@ -168,17 +175,20 @@ def listenForAck():
                 volume = cast(interface, POINTER(IAudioEndpointVolume))
             else:
                 volume = None
-        except Exception:
+        except Exception as e:
+            logger.debug("AudioUtilities.GetSpeakers failed: %s", e)
             volume = None
 
         try:
             c = wmi.WMI()
-        except Exception:
+        except Exception as e:
+            logger.debug("wmi.WMI() failed: %s", e)
             c = None
 
         try:
             t = wmi.WMI(moniker="//./root/wmi")
-        except Exception:
+        except Exception as e:
+            logger.debug("wmi WMI(moniker) failed: %s", e)
             t = None
 
         # Keep trying to open the microphone; if the stream closes, re-open and continue.
@@ -192,55 +202,57 @@ def listenForAck():
                 with sr.Microphone() as source:
                     try:
                         r.adjust_for_ambient_noise(source, duration=1.0)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("adjust_for_ambient_noise failed: %s", e)
 
                     # Inner loop: listen until we hit a stream error, then break to re-open
                     while not stop.is_set():
                         try:
-                            print("listening...")
+                            logger.info("listening...")
                             audio = r.listen(source, timeout=None, phrase_time_limit=5)
                             try:
                                 text = r.recognize_google(audio).lower()
                             except sr.UnknownValueError:
                                 continue
                             except sr.RequestError as e:
-                                print("Speech recognition request failed:", e)
+                                logger.error("Speech recognition request failed: %s", e)
                                 time.sleep(1)
                                 continue
 
-                            print(text)
+                            logger.info("Recognized text: %s", text)
                             # accept several common variants/short forms
                             if any(k in text for k in ("acknowledge", "acknowledged", "i acknowledge", "ack")):
                                 show_withdraw_event.set()
                                 Data.newData = False
                         except (OSError, IOError, sr.WaitTimeoutError) as e:
                             # Stream closed or I/O error — break to outer loop and re-open microphone
-                            print("listen error (stream closed or I/O):", e)
+                            logger.warning("listen error (stream closed or I/O): %s", e)
                             break
                         except Exception as e:
-                            print("listen error:", e)
+                            logger.error("listen error: %s", e)
                             time.sleep(0.5)
+            except (OSError, IOError, sr.RequestError) as e:
+                logger.error("microphone error (opening): %s", e)
             except Exception as e:
-                print("microphone error (opening):", e)
+                logger.debug("unexpected microphone open error: %s", e)
 
             # small delay before retrying to open microphone
             time.sleep(1)
     finally:
         try:
             pythoncom.CoUninitialize()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("pythoncom.CoUninitialize: %s", e)
 
 def openCVMain():
     # open video source
     try:
         src = int(SOURCE)
-    except Exception:
+    except (ValueError, TypeError):
         src = SOURCE
     cap = cv2.VideoCapture(src)
     if not cap.isOpened():
-        print(f"Cannot open video source: {SOURCE}")
+        logger.error("Cannot open video source: %s", SOURCE)
         return
 
     background = None
@@ -249,7 +261,7 @@ def openCVMain():
     # small kernel for morphological opening to remove speckle noise
     morph_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
 
-    print("Starting motion detection. Press 'q' in the window to quit.")
+    logger.info("Starting motion detection. Press 'q' in the window to quit.")
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     recognizer = None
     labels = {}
@@ -258,18 +270,19 @@ def openCVMain():
             recognizer = cv2.face.LBPHFaceRecognizer_create()
             recognizer.read(MODEL_PATH)
         elif hasattr(cv2, 'face') and not os.path.exists(MODEL_PATH):
-            print('Face recognizer model not found at', MODEL_PATH)
+            logger.warning('Face recognizer model not found at %s', MODEL_PATH)
         else:
-            print('cv2.face module not available; skipping face recognition')
+            logger.warning('cv2.face module not available; skipping face recognition')
     except Exception as e:
-        print('Error loading recognizer:', e)
+        logger.error('Error loading recognizer: %s', e)
 
     try:
         if os.path.exists(LABELS_PATH):
             with open(LABELS_PATH, 'r', encoding='utf-8') as f:
                 labels = json.load(f)
                 # labels expected as {"1": "Alice", "2": "Bob"}
-    except Exception:
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logger.warning("Failed to load labels: %s", e)
         labels = {}
 
     openCVMain.last_seen = None
@@ -286,20 +299,23 @@ def openCVMain():
             # face detection/recognition
             try:
                 faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(60, 60))
-            except Exception:
+            except cv2.error as e:
+                logger.debug("face_cascade.detectMultiScale failed: %s", e)
                 faces = ()
 
             for (fx, fy, fw, fh) in faces:
                 try:
                     face_roi = gray[fy:fy+fh, fx:fx+fw]
                     face_resized = cv2.resize(face_roi, (200, 200))
-                except Exception:
+                except cv2.error as e:
+                    logger.debug("face resize failed: %s", e)
                     continue
 
                 if recognizer is not None:
                     try:
                         label_id, confidence = recognizer.predict(face_resized)
-                    except Exception:
+                    except cv2.error as e:
+                        logger.debug("recognizer.predict failed: %s", e)
                         label_id, confidence = None, None
                     name = None
                     if label_id is not None and confidence is not None:
@@ -316,7 +332,8 @@ def openCVMain():
                             openCVMain.last_seen_time = now
                             try:
                                 root.after(0, lambda n=name: userVar.set(f"Welcome, {n}"))
-                            except Exception:
+                            except tk.TclError as e:
+                                logger.debug("failed to update userVar: %s", e)
                                 pass
                             show_fullscreen_event.set()
                     else:
@@ -375,7 +392,7 @@ def openCVMain():
 
             if getattr(openCVMain, "consec_no_motion", 0) >= 200:
                 if not show_fullscreen_event.is_set():
-                    print("No motion - requesting fullscreen")
+                    logger.info("No motion - requesting fullscreen")
                     show_fullscreen_event.set()
                     openCVMain.consec_no_motion = 0
 
