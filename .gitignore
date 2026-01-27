@@ -1,3 +1,5 @@
 api.txt
 models
-dataset/Rohan
+dataset/
+__pycache__/
+*.pyc
