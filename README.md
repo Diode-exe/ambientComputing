@@ -1,47 +1,71 @@
 
 # ambientComputing
 
-Make computers more inviting and/or personal
+Make an idle computer feel more inviting and personal by showing time, weather, and a personalized greeting.
 
-Saying acknowledge will close the info screen
+Overview
 
-This has crashed my computer and I don't know why, so be careful.
+- Purpose: When the system is idle, show a fullscreen info screen (time, day, weather, and optional personal greeting).
+- Triggering: motion detection via webcam triggers/controls behavior; saying "acknowledge" (speech) will dismiss the screen.
+- Personalization: optional local face recognition (LBPH) to greet known users.
 
-## I assume ZERO RESPONSIBILITY for any issues that may occur
+Quick start
 
-### Quirks
+1. Install dependencies:
 
-For some reason, if you stop the program in the middle of the fade transition, it'll raise a ValueError
+```bash
+pip install -r requirements.txt
+```
 
-Saying acknowledge will dismiss the window for 200 frames. I need to make it so that there is new data, maybe
+2. (Optional) Train the face model from `dataset/<person>/*.jpg` using the included trainer:
 
-It really should switch every 2 minutes, but it doesn't for testing
+```bash
+python train_faces.py --dataset dataset --model models/face_recognizer.yml --labels models/labels.json
+```
 
-### How do I make this work?
+3. Configure `constants.py` (camera source, thresholds, model paths, whether to enable face recognition, lat/long for weather).
 
-Great question. You need to have a folder structure of ```projectFolder/dataset/nameOfPersonToTrain/name1.jpg```
+4. Run the app:
 
-It doesn't have to be a .jpg file, as long as it's a picture. Then run the command in train.txt, making sure to
-navigate to your project folder in your terminal. It will train, and then you can run main.py.
+```bash
+python main.py
+```
 
-You can edit constants.py to change settings, such as the timezone and whether face recognition is enabled.
+Files of interest
 
-```pip install -r requirements.txt``` to install dependencies.
+- `main.py`: main application (motion detection, face recognition, UI, speech listen).
+- `train_faces.py`: prepares dataset and trains an LBPH model; writes model and `labels.json`.
+- `constants.py`: runtime configuration (paths, thresholds, time zone, coordinates).
 
-Copy and paste train.txt into the terminal to train the model. You need a lot of pictures of each person for it to work well. Make sure to cd to the project folder first! You don't have to do this every time, only when you add new people or want to retrain, but you do need to do it at least once. You also don't have to do it if you just want to run the program without face recognition.
+Face recognition notes
 
-### Warning
+- The trainer and recognizer use OpenCV's LBPH (`cv2.face.LBPHFaceRecognizer`). This is CPU-only; it will not automatically use a GPU.
+- To improve accuracy use many clear face images per person, consistent lighting and frontal faces.
+- `train_faces.py` writes `models/face_recognizer.yml` and `models/labels.json`. `main.py` loads those when `FACE_RECOGNITION_ENABLED` is true.
 
-This is not an easy program to run! The face recognition makes OpenCV choppy even on my laptop with a Core Ultra 9 185H! You have been warned!
+GPU and performance
 
-### This is not completely local
+- The current implementation is CPU-bound. OpenCV can be built with CUDA support, but LBPH has no standard CUDA implementation. To use GPU training/inference, migrate to a deep-learning pipeline (PyTorch/TensorFlow) and use GPU-accelerated models.
 
-Some parts of this program use online APIs, such as the TTS system. Be aware of this if you are concerned about privacy. The face recognition is completely local, however.
+Privacy and networking
 
-### Constants.py
+- Face recognition is local (model/data stored locally).
+- Some features use web APIs (e.g., weather); see `main.py` for endpoints used.
 
-This file contains constants, such as controlling delays between screen changes, and coordinates for the weather.
+Troubleshooting
 
-### Operating System Compatibility
+- If the app crashes during fade transitions, avoid terminating while fading; ensure graceful shutdown.
+- If face recognition never identifies anyone:
+- Confirm `models/face_recognizer.yml` and `models/labels.json` exist and paths in `constants.py` are correct.
+- Run `train_faces.py` with a properly structured `dataset/` folder.
+- Add debug prints to `main.py` around `recognizer.predict()` to see `label_id` and `confidence`.
+- If the webcam cannot be opened, check `SOURCE` in `constants.py` and that no other app is using the camera.
 
-Windows only
+Warnings
+
+- This software interacts with hardware (camera, microphone), uses online APIs, and can block the desktop with a fullscreen window. Use carefully.
+- The author disclaims responsibility for system crashes or unexpected behavior.
+
+Contributing
+
+- Clean, focused PRs are welcome. If adding GPU-capable training/recognition, include a README section explaining dependencies and migration steps.
