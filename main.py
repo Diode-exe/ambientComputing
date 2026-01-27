@@ -140,8 +140,9 @@ def start_fetch_thread():
 oldTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
 
 def fadeInWindow():
+    global fadedIn
     n = 0.01
-    while n != 1.0:
+    while n < 1.0:
         n += 0.01
         root.attributes('-alpha', n)
         root.update()
@@ -149,8 +150,9 @@ def fadeInWindow():
     fadedIn = True
 
 def fadeOutWindow():
+    global fadedIn
     n = 1.0
-    while n != 0.01:
+    while n > 0.01:
         n -= 0.01
         root.attributes('-alpha', n)
         root.update()
@@ -343,13 +345,9 @@ def openCVMain():
 
                     name = labels.get(str(label_id)) if label_id is not None else None
 
-                    # display candidate name and confidence for debugging/visibility
-                    display_name = name if name is not None else (f"id:{label_id}" if label_id is not None else "Unknown")
-                    display_conf = int(confidence) if confidence is not None else 'N/A'
-                    cv2.putText(frame, f"{display_name} ({display_conf})", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0), 2)
-                    userVar.set(f"Welcome, {display_name}")
-
                     if name and confidence is not None and confidence < RECOGNITION_CONF_THRESHOLD:
+                        display_conf = int(confidence)
+                        cv2.putText(frame, f"{name} ({display_conf})", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0), 2)
                         cv2.rectangle(frame, (fx, fy), (fx+fw, fy+fh), (0, 255, 0), 2)
                         now = time.time()
                         if openCVMain.last_seen != name or (now - openCVMain.last_seen_time) > 5:
@@ -360,11 +358,10 @@ def openCVMain():
                             except tk.TclError as e:
                                 logger.debug("failed to update userVar: %s", e)
                                 pass
-                            show_fullscreen_event.set()
-
+                            # show_fullscreen_event.set()
                     else:
+                        cv2.putText(frame, "Unknown", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
                         cv2.rectangle(frame, (fx, fy), (fx+fw, fy+fh), (0, 0, 255), 2)
-
 
             if background is None:
                 background = gray.astype("float")

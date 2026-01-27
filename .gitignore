@@ -3,3 +3,4 @@ models
 dataset/
 __pycache__/
 *.pyc
+/videoToImage
