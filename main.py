@@ -97,11 +97,12 @@ def getWeather(weatherVar):
             "latitude": LAT,
             "longitude": LONG,
             "current_weather": True,
-            "timezone": TIMEZONE,
+            "timezone": TIMEZONE
         }
         temp = None
         try:
             r = requests.get(url, params=params, timeout=5)
+            print(r.url)
             r.raise_for_status()
             data = r.json()
             temp = data.get("current_weather", {}).get("temperature")
