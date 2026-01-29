@@ -47,7 +47,9 @@ Face recognition notes
 
 The files to train with must be .png, .jpg, or .jpeg file types.
 
-5,000 images recommended per person.
+5,000 images recommended per person. One way I've achieved this is taking a video of the person's face turning side to side, then extracting frames using ffmpeg:
+
+```ffmpeg -i .\input.mp4 frame_%06d.png```
 
 Lower number next to name means higher confidence.
 
