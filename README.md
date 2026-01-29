@@ -13,23 +13,23 @@ Quick start
 
 1. Install dependencies:
 
-```bash
-pip install -r requirements.txt
-```
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 2. (Optional) Train the face model from `dataset/<person>/*.jpg` using the included trainer:
 
-```bash
-python train_faces.py --dataset dataset --model models/face_recognizer.yml --labels models/labels.json
-```
+    ```bash
+    python train_faces.py --dataset dataset --model models/face_recognizer.yml --labels models/labels.json
+    ```
 
 3. Configure `constants.py` (camera source, thresholds, model paths, whether to enable face recognition, lat/long for weather).
 
 4. Run the app:
 
-```bash
-python main.py
-```
+    ```bash
+    python main.py
+    ```
 
 Files of interest
 
