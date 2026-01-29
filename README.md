@@ -41,9 +41,15 @@ Files of interest
 Face recognition notes
 
 - The trainer and recognizer use OpenCV's LBPH (`cv2.face.LBPHFaceRecognizer`). This is CPU-only; it will not automatically use a GPU.
+
 - To improve accuracy use many clear face images per person, consistent lighting and frontal faces.
 - `train_faces.py` writes `models/face_recognizer.yml` and `models/labels.json`. `main.py` loads those when `FACE_RECOGNITION_ENABLED` is true.
+
 The files to train with must be .png, .jpg, or .jpeg file types.
+
+5,000 images recommended per person.
+
+Lower number next to name means higher confidence.
 
 GPU and performance
 
