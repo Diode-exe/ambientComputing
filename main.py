@@ -46,6 +46,9 @@ global fadedIn
 
 fadedIn = False
 
+global expoBackoff
+expoBackoff = 1000  # milliseconds
+
 show_fullscreen_event = threading.Event()
 show_withdraw_event = threading.Event()
 stop = threading.Event()
@@ -254,15 +257,21 @@ def listenForAck():
 
 def openCVMain():
     # open video source
-    try:
-        src = int(SOURCE)
-    except (ValueError, TypeError):
-        src = SOURCE
-    cap = cv2.VideoCapture(src)
-    if not cap.isOpened():
-        logger.error("Cannot open video source: %s", SOURCE)
-        return
-
+    while not cap.IsOpened():
+        try:
+            src = int(SOURCE)
+        except (ValueError, TypeError):
+            logger.warning("SOURCE is not an integer. Defaulting to 0. ")
+            src = 0
+        cap = cv2.VideoCapture(src)
+        if not cap.isOpened():
+            logger.error("Cannot open video source: %s", SOURCE)
+            time.sleep(expoBackoff / 1000.0)
+            expoBackoff += 1000
+            expoBackoff = min(expoBackoff * 2, 16000)  # cap backoff at 16 seconds
+            if expoBackoff == 16000:
+                logger.info("Max backoff reached. Stopping. ")
+                sys.exit(1)
     background = None
     alpha = 0.02
     consec_frames = 0
