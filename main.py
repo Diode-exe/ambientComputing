@@ -440,7 +440,6 @@ def _poll_fullscreen():
         try:
             root.deiconify()
             root.attributes("-fullscreen", True)
-            root.attributes('-alpha', 0.01)
             root.lift()
             root.focus_force()
             if not fadedIn:
