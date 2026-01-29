@@ -72,7 +72,7 @@ Troubleshooting
 Warnings
 
 - This software interacts with hardware (camera, microphone), uses online APIs, and can block the desktop with a fullscreen window. Use carefully.
-- The author disclaims responsibility for system crashes or unexpected behavior.
+- I (The author) disclaim responsibility for system crashes or unexpected behavior.
 
 Contributing
 
