@@ -47,8 +47,10 @@ Face recognition notes
 
 The files to train with must be .png, .jpg, or .jpeg file types.
 
-5,000 images recommended per person. One way I've achieved this is taking a video of the person's face turning side to side, then extracting frames using ffmpeg:
+3,000 images recommended per person. One way I've achieved this is taking a video of the person's face turning side to side, then extracting frames using ffmpeg:
 ```ffmpeg -i .\input.mp4 frame_%06d.png```
+
+3,500 images makes my laptop with a Core Ultra 9 185H take about 10-15 seconds to load the model and start capturing, and 5-7 minutes to train.
 
 Lower number next to name means higher confidence.
 
