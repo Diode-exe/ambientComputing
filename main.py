@@ -18,6 +18,7 @@ import random
 import pywinstyles
 import os
 import json
+import getpass
 from constants import (
     SOURCE,
     MIN_AREA,
@@ -67,7 +68,7 @@ class Data:
 # # Posted by Marcin Augustyniak, modified by community. See post 'Timeline' for change history
 # # Retrieved 2026-01-22, License - CC BY-SA 4.0
 
-# os.getlogin()
+# getpass.getuser()()
 # )
 
 # this will eventually be used for news
@@ -251,6 +252,7 @@ def listenForAck():
             logger.debug("pythoncom.CoUninitialize: %s", e)
 
 def openCVMain():
+    global expoBackoff
     # open video source
     try:
         src = int(SOURCE)
@@ -365,7 +367,7 @@ def openCVMain():
                             # show_fullscreen_event.set()
                     else:
                         cv2.putText(frame, "Unknown", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
-                        userVar.set(f"Welcome, {os.getlogin()} (logged on user)")
+                        userVar.set(f"Welcome, {getpass.getuser()()} (logged on user)")
                         cv2.rectangle(frame, (fx, fy), (fx+fw, fy+fh), (0, 0, 255), 2)
 
             if background is None:
@@ -520,7 +522,7 @@ weatherVar = tk.StringVar(value="weather")
 weatherLabel = tk.Label(stuffFrame, textvariable=weatherVar, fg='white', bg='black', font=('Helvetica', 60))
 weatherLabel.pack(expand=True)
 
-userVar = tk.StringVar(value=f"Welcome, {os.getlogin()} (logged on user)")
+userVar = tk.StringVar(value=f"Welcome, {getpass.getuser()()} (logged on user)")
 userLabel = tk.Label(stuffFrame, textvariable=userVar, fg='white', bg='black', font=('Helvetica', 60))
 userLabel.pack(expand=True)
 
