@@ -19,6 +19,7 @@ import pywinstyles
 import os
 import json
 import getpass
+import math
 from constants import (
     SOURCE,
     MIN_AREA,
@@ -260,6 +261,12 @@ def openCVMain():
         logger.warning("SOURCE is not an integer. Defaulting to 0. ")
         src = 0
     cap = cv2.VideoCapture(src)
+    # set capture resolution to reduce processing cost and improve consistency
+    try:
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    except Exception:
+        pass
     if not cap.isOpened():
         logger.error("Cannot open video source: %s", SOURCE)
         time.sleep(expoBackoff / 1000.0)
@@ -277,6 +284,8 @@ def openCVMain():
 
     logger.info("Starting motion detection. Press 'q' in the window to quit.")
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    # eye cascade used for simple alignment
+    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
     recognizer = None
     labels = {}
     # initial load only if opt-in enabled
@@ -336,7 +345,34 @@ def openCVMain():
             for (fx, fy, fw, fh) in faces:
                 try:
                     face_roi = gray[fy:fy+fh, fx:fx+fw]
-                    face_resized = cv2.resize(face_roi, (200, 200))
+                    # align face to reduce effect of roll/tilt
+                    def align_face(face_gray):
+                        try:
+                            eyes = eye_cascade.detectMultiScale(face_gray, scaleFactor=1.1, minNeighbors=5, minSize=(15, 15))
+                            if len(eyes) >= 2:
+                                # pick two eyes sorted by x coordinate
+                                eyes_sorted = sorted(eyes, key=lambda e: e[0])[:2]
+                                (ex1, ey1, ew1, eh1) = eyes_sorted[0]
+                                (ex2, ey2, ew2, eh2) = eyes_sorted[1]
+                                c1 = (ex1 + ew1/2.0, ey1 + eh1/2.0)
+                                c2 = (ex2 + ew2/2.0, ey2 + eh2/2.0)
+                                dx = c2[0] - c1[0]
+                                dy = c2[1] - c1[1]
+                                if dx == 0:
+                                    return face_gray
+                                angle = math.degrees(math.atan2(dy, dx))
+                                # rotate around center of face
+                                (h, w) = face_gray.shape[:2]
+                                center = (w // 2, h // 2)
+                                M = cv2.getRotationMatrix2D(center, angle, 1.0)
+                                rotated = cv2.warpAffine(face_gray, M, (w, h), flags=cv2.INTER_LINEAR)
+                                return rotated
+                        except Exception:
+                            pass
+                        return face_gray
+
+                    aligned = align_face(face_roi)
+                    face_resized = cv2.resize(aligned, (200, 200))
                 except cv2.error as e:
                     logger.debug("face resize failed: %s", e)
                     continue
@@ -367,7 +403,7 @@ def openCVMain():
                             # show_fullscreen_event.set()
                     else:
                         cv2.putText(frame, "Unknown", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
-                        userVar.set(f"Welcome, {getpass.getuser()()} (logged on user)")
+                        userVar.set(f"Welcome, {getpass.getuser()} (logged on user)")
                         cv2.rectangle(frame, (fx, fy), (fx+fw, fy+fh), (0, 0, 255), 2)
 
             if background is None:
@@ -522,7 +558,7 @@ weatherVar = tk.StringVar(value="weather")
 weatherLabel = tk.Label(stuffFrame, textvariable=weatherVar, fg='white', bg='black', font=('Helvetica', 60))
 weatherLabel.pack(expand=True)
 
-userVar = tk.StringVar(value=f"Welcome, {getpass.getuser()()} (logged on user)")
+userVar = tk.StringVar(value=f"Welcome, {getpass.getuser()} (logged on user)")
 userLabel = tk.Label(stuffFrame, textvariable=userVar, fg='white', bg='black', font=('Helvetica', 60))
 userLabel.pack(expand=True)
 
