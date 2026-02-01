@@ -261,7 +261,7 @@ def openCVMain():
         logger.warning("SOURCE is not an integer. Defaulting to 0. ")
         src = 0
     cap = cv2.VideoCapture(src)
-    # set capture resolution to reduce processing cost and improve consistency
+
     try:
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -274,7 +274,9 @@ def openCVMain():
         expoBackoff = min(expoBackoff * 2, 16000)  # cap backoff at 16 seconds
         if expoBackoff == 16000:
             logger.info("Max backoff reached. Stopping. ")
-            sys.exit(1)
+            stop.set()
+            root.after(0, root.quit)
+            return
 
     background = None
     alpha = 0.02
@@ -592,4 +594,5 @@ if __name__ == '__main__':
             listenThread.join(timeout=2)
         except Exception:
             logging.error("Error joining listenThread", exc_info=True)
-        sys.exit()
+        stop.set()
+        root.after(0, root.quit)
