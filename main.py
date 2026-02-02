@@ -1,5 +1,9 @@
-# style: no comments, self-explanatory code
-
+import datetime
+import random
+import os
+import json
+import getpass
+import math
 import logging
 import time
 import threading
@@ -8,18 +12,10 @@ import cv2
 import speech_recognition as sr
 import wmi
 import pythoncom
-from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-import sys
-import datetime
 import requests
-import random
 import pywinstyles
-import os
-import json
-import getpass
-import math
 from constants import (
     SOURCE,
     MIN_AREA,
@@ -34,14 +30,14 @@ from constants import (
     TIMEZONE,
     FACE_RECOGNITION_ENABLED
 )
-face_recognition_enabled = FACE_RECOGNITION_ENABLED
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
-global fadedIn
+global FADED_IN
 
-fadedIn = False
+FADED_IN = False
 
 global expoBackoff
 expoBackoff = 1000  # milliseconds
@@ -140,24 +136,24 @@ def start_fetch_thread():
 oldTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
 
 def fadeInWindow():
-    global fadedIn
+    global FADED_IN
     n = 0.01
     while n < 1.0:
         n += 0.01
         root.attributes('-alpha', n)
         root.update()
         time.sleep(FADE_DELAY)
-    fadedIn = True
+    FADED_IN = True
 
 def fadeOutWindow():
-    global fadedIn
+    global FADED_IN
     n = 1.0
     while n > 0.01:
         n -= 0.01
         root.attributes('-alpha', n)
         root.update()
         time.sleep(FADE_DELAY)
-    fadedIn = False
+    FADED_IN = False
 
 def getTimeToDisplay():
     currentTime = str(datetime.datetime.now().strftime("%Y-%m-%d \n %H:%M:%S"))
@@ -180,7 +176,6 @@ def listenForAck():
             devices = AudioUtilities.GetSpeakers()
             if hasattr(devices, "Activate"):
                 interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-                volume = cast(interface, POINTER(IAudioEndpointVolume))
             else:
                 volume = None
         except Exception as e:
@@ -292,15 +287,15 @@ def openCVMain():
     labels = {}
     # initial load only if opt-in enabled
     try:
-            if face_recognition_enabled:
-                if hasattr(cv2, 'face') and os.path.exists(MODEL_PATH):
-                    recognizer = cv2.face.LBPHFaceRecognizer_create()
-                    recognizer.read(MODEL_PATH)
-                    logger.info('Loaded face recognizer model from %s', MODEL_PATH)
-                elif hasattr(cv2, 'face') and not os.path.exists(MODEL_PATH):
-                    logger.warning('Face recognizer model not found at %s', MODEL_PATH)
-                else:
-                    logger.warning('cv2.face module not available; skipping face recognition')
+        if FACE_RECOGNITION_ENABLED:
+            if hasattr(cv2, 'face') and os.path.exists(MODEL_PATH):
+                recognizer = cv2.face.LBPHFaceRecognizer_create()
+                recognizer.read(MODEL_PATH)
+                logger.info('Loaded face recognizer model from %s', MODEL_PATH)
+            elif hasattr(cv2, 'face') and not os.path.exists(MODEL_PATH):
+                logger.warning('Face recognizer model not found at %s', MODEL_PATH)
+            else:
+                logger.warning('cv2.face module not available; skipping face recognition')
     except Exception as e:
         logger.error('Error loading recognizer: %s', e)
 
@@ -327,12 +322,12 @@ def openCVMain():
             # face detection/recognition
             try:
                 faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(60, 60))
-            except cv2.error as e:
+            except Exception as e:
                 logger.debug("face_cascade.detectMultiScale failed: %s", e)
                 faces = ()
 
             # dynamically load/unload recognizer based on runtime opt-in
-            if face_recognition_enabled and recognizer is None:
+            if FACE_RECOGNITION_ENABLED and recognizer is None:
                 try:
                     if hasattr(cv2, 'face') and os.path.exists(MODEL_PATH):
                         recognizer = cv2.face.LBPHFaceRecognizer_create()
@@ -340,7 +335,7 @@ def openCVMain():
                         logger.info('Loaded face recognizer at runtime from %s', MODEL_PATH)
                 except Exception as e:
                     logger.error('Error loading recognizer at runtime: %s', e)
-            elif not face_recognition_enabled and recognizer is not None:
+            elif not FACE_RECOGNITION_ENABLED and recognizer is not None:
                 recognizer = None
                 logger.info('Unloaded face recognizer at runtime')
 
@@ -375,7 +370,7 @@ def openCVMain():
 
                     aligned = align_face(face_roi)
                     face_resized = cv2.resize(aligned, (200, 200))
-                except cv2.error as e:
+                except Exception as e:
                     logger.debug("face resize failed: %s", e)
                     continue
 
@@ -383,7 +378,7 @@ def openCVMain():
                     try:
                         label_id, confidence = recognizer.predict(face_resized)
                         # logger.info('predict -> id=%s conf=%s', label_id, confidence)
-                    except cv2.error as e:
+                    except Exception as e:
                         logger.debug("recognizer.predict failed: %s", e)
                         label_id, confidence = None, None
 
@@ -482,7 +477,7 @@ def _poll_fullscreen():
             root.attributes("-fullscreen", True)
             root.lift()
             root.focus_force()
-            if not fadedIn:
+            if not FADED_IN:
                 fadeInWindow()
         except Exception:
             pass
