@@ -176,7 +176,7 @@ def listen_for_ack():
     # CoInitialize COM for this thread (required by WMI/pywin32)
     try:
         pythoncom.CoInitialize()
-    except Exception as e:
+    except pythoncom.error as e:
         logger.debug("pythoncom.CoInitialize: %s", e)
     try:
         try:
@@ -186,7 +186,7 @@ def listen_for_ack():
                 volume = cast(interface, POINTER(IAudioEndpointVolume))
             else:
                 volume = None
-        except Exception as e:
+        except pythoncom.error as e:
             logger.debug("AudioUtilities.GetSpeakers failed: %s", e)
             volume = None
 
@@ -245,10 +245,7 @@ def listen_for_ack():
             # small delay before retrying to open microphone
             time.sleep(1)
     finally:
-        try:
-            pythoncom.CoUninitialize()
-        except Exception as e:
-            logger.debug("pythoncom.CoUninitialize: %s", e)
+        pythoncom.CoUninitialize()
 
 def open_cv_main():
     # open video source
@@ -262,7 +259,7 @@ def open_cv_main():
     try:
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-    except Exception:
+    except Exception as e:
         pass
     if not cap.isOpened():
         logger.error("Cannot open video source: %s", SOURCE)
