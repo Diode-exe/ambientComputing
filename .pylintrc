@@ -445,7 +445,8 @@ disable=raw-checker-failed,
         deprecated-pragma,
         use-symbolic-message-instead,
         use-implicit-booleaness-not-comparison-to-string,
-        use-implicit-booleaness-not-comparison-to-zero
+        use-implicit-booleaness-not-comparison-to-zero,
+        C0114, # missing-module-docstring
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -464,7 +465,7 @@ timeout-methods=requests.api.delete,requests.api.get,requests.api.head,requests.
 [MISCELLANEOUS]
 
 # Whether or not to search for fixme's in docstrings.
-check-fixme-in-docstring=no
+# check-fixme-in-docstring=no
 
 # List of note tags to take in consideration, separated by a comma.
 notes=FIXME,
