@@ -35,9 +35,19 @@ from constants import (
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
-FADED_IN = False
+class FadeData:
+    """
+    Class to hold fade state data.
+    """
+    faded_in = False
 
-expoBackoff = 1000  # milliseconds
+class TimeData:
+    """
+    Class to hold time display data.
+    """
+    OLD_TIME = ""
+
+EXPO_BACKOFF = 1000  # milliseconds
 
 show_fullscreen_event = threading.Event()
 show_withdraw_event = threading.Event()
@@ -130,7 +140,7 @@ def start_fetch_thread():
     return getWeather()
 
 # i did this so that i can compare it below, it's only set once as a default
-oldTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
+TimeData.OLD_TIME = str(datetime.datetime.now().replace(microsecond=0))[:-3]
 
 def fadeInWindow():
     n = 0.01
@@ -139,7 +149,7 @@ def fadeInWindow():
         root.attributes('-alpha', n)
         root.update()
         time.sleep(FADE_DELAY)
-    FADED_IN = True
+    FadeData.faded_in = True
 
 def fadeOutWindow():
     n = 1.0
@@ -148,17 +158,16 @@ def fadeOutWindow():
         root.attributes('-alpha', n)
         root.update()
         time.sleep(FADE_DELAY)
-    FADED_IN = False
+    FadeData.faded_in = False
 
 def getTimeToDisplay():
     currentTime = str(datetime.datetime.now().strftime("%Y-%m-%d \n %H:%M:%S"))
     dayOfTheWeek = datetime.datetime.now().strftime("%A")
     dotwVar.set(dayOfTheWeek)
     timeVar.set(currentTime)
-    global oldTime
-    if currentTime != oldTime:
+    if currentTime != TimeData.OLD_TIME:
         Data.newData = True
-        oldTime = currentTime
+        TimeData.OLD_TIME = currentTime
 
 def listen_for_ack():
     # CoInitialize COM for this thread (required by WMI/pywin32)
@@ -244,7 +253,7 @@ def listen_for_ack():
             logger.debug("pythoncom.CoUninitialize: %s", e)
 
 def openCVMain():
-    global expoBackoff
+    global EXPO_BACKOFF
     # open video source
     try:
         src = int(SOURCE)
@@ -260,10 +269,10 @@ def openCVMain():
         pass
     if not cap.isOpened():
         logger.error("Cannot open video source: %s", SOURCE)
-        time.sleep(expoBackoff / 1000.0)
-        expoBackoff += 1000
-        expoBackoff = min(expoBackoff * 2, 16000)  # cap backoff at 16 seconds
-        if expoBackoff == 16000:
+        time.sleep(EXPO_BACKOFF / 1000.0)
+        EXPO_BACKOFF += 1000
+        EXPO_BACKOFF = min(EXPO_BACKOFF * 2, 16000)  # cap backoff at 16 seconds
+        if EXPO_BACKOFF == 16000:
             logger.info("Max backoff reached. Stopping. ")
             stop.set()
             root.after(0, root.quit)
@@ -473,7 +482,7 @@ def _poll_fullscreen():
             root.attributes("-fullscreen", True)
             root.lift()
             root.focus_force()
-            if not FADED_IN:
+            if not FadeData.faded_in:
                 fadeInWindow()
         except Exception:
             pass
