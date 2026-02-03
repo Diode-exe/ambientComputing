@@ -47,6 +47,12 @@ class TimeData:
     """
     OLD_TIME = ""
 
+class Data:
+    """
+    Class to hold general data flags.
+    """
+    newData = False
+
 EXPO_BACKOFF = 1000  # milliseconds
 
 show_fullscreen_event = threading.Event()
@@ -64,9 +70,6 @@ root.geometry(f"{width}x{height}")
 root.configure(background='black')
 
 root.withdraw()
-
-class Data:
-    newData = False
 
 # print(# Source - https://stackoverflow.com/a/1594451
 # # Posted by Marcin Augustyniak, modified by community. See post 'Timeline' for change history
@@ -210,7 +213,7 @@ def listen_for_ack():
                 with sr.Microphone() as source:
                     try:
                         r.adjust_for_ambient_noise(source, duration=1.0)
-                    except Exception as e:
+                    except (sr.UnknownValueError, sr.RequestError) as e:
                         logger.debug("adjust_for_ambient_noise failed: %s", e)
 
                     # Inner loop: listen until we hit a stream error, then break to re-open
@@ -236,13 +239,8 @@ def listen_for_ack():
                             # Stream closed or I/O error. break to outer loop and re-open microphone
                             logger.warning("listen error (stream closed or I/O): %s", e)
                             break
-                        except Exception as e:
-                            logger.error("listen error: %s", e)
-                            time.sleep(0.5)
             except (OSError, IOError, sr.RequestError) as e:
                 logger.error("microphone error (opening): %s", e)
-            except Exception as e:
-                logger.debug("unexpected microphone open error: %s", e)
 
             # small delay before retrying to open microphone
             time.sleep(1)
@@ -252,8 +250,7 @@ def listen_for_ack():
         except Exception as e:
             logger.debug("pythoncom.CoUninitialize: %s", e)
 
-def openCVMain():
-    global EXPO_BACKOFF
+def open_cv_main():
     # open video source
     try:
         src = int(SOURCE)
@@ -313,8 +310,8 @@ def openCVMain():
         logger.warning("Failed to load labels: %s", e)
         labels = {}
 
-    openCVMain.last_seen = None
-    openCVMain.last_seen_time = 0
+    open_cv_main.last_seen = None
+    open_cv_main.last_seen_time = 0
     try:
         while not stop.is_set():
             ret, frame = cap.read()
@@ -394,14 +391,13 @@ def openCVMain():
                         cv2.putText(frame, f"{name} ({display_conf})", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0), 2)
                         cv2.rectangle(frame, (fx, fy), (fx+fw, fy+fh), (0, 255, 0), 2)
                         now = time.time()
-                        if openCVMain.last_seen != name or (now - openCVMain.last_seen_time) > 5:
-                            openCVMain.last_seen = name
-                            openCVMain.last_seen_time = now
+                        if open_cv_main.last_seen != name or (now - open_cv_main.last_seen_time) > 5:
+                            open_cv_main.last_seen = name
+                            open_cv_main.last_seen_time = now
                             try:
                                 root.after(0, lambda n=name: userVar.set(f"Welcome, {n}"))
                             except tk.TclError as e:
                                 logger.debug("failed to update userVar: %s", e)
-                                pass
                             # show_fullscreen_event.set()
                     else:
                         cv2.putText(frame, "Unknown", (fx, fy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
@@ -433,7 +429,6 @@ def openCVMain():
 
             motion = len(boxes) > 0
             if motion:
-                consecFramesNoMotion = 0
                 consec_frames += 1
             else:
                 consec_frames = max(0, consec_frames - 1)
@@ -452,20 +447,20 @@ def openCVMain():
 
             # track consecutive frames with no motion and request fullscreen
             if not motion:
-                consec_no_motion = getattr(openCVMain, "consec_no_motion", 0) + 1
-                openCVMain.consec_no_motion = consec_no_motion
+                consec_no_motion = getattr(open_cv_main, "consec_no_motion", 0) + 1
+                open_cv_main.consec_no_motion = consec_no_motion
             else:
-                openCVMain.consec_no_motion = 0
+                open_cv_main.consec_no_motion = 0
 
-            if getattr(openCVMain, "consec_no_motion", 0) >= 200:
+            if getattr(open_cv_main, "consec_no_motion", 0) >= 200:
                 if not show_fullscreen_event.is_set():
                     logger.info("No motion - requesting fullscreen")
                     show_fullscreen_event.set()
-                    openCVMain.consec_no_motion = 0
+                    open_cv_main.consec_no_motion = 0
 
             getTimeToDisplay()
 
-            # if getattr(openCVMain, "consec_no_motion", 0) <= 200:
+            # if getattr(open_cv_main, "consec_no_motion", 0) <= 200:
             #     if not show_withdraw_event.is_set():
             #         print("Not at threshold - withdrawing")
             #         show_withdraw_event.set()
@@ -504,26 +499,26 @@ def _poll_withdraw():
 #     # Posted by Akascape, modified by community. See post 'Timeline' for change history
 #     # Retrieved 2026-01-21, License - CC BY-SA 4.0
 
-def increaseOpacityFrame(stuffFrame):
+def increaseOpacityFrame(Frame0):
     n = 0.01
     while not n >= 1.0:
         n += 0.01
-        pywinstyles.set_opacity(stuffFrame, n, color=None)
+        pywinstyles.set_opacity(Frame0, n, color=None)
         root.update()
         time.sleep(FADE_DELAY)
 
-def decreaseOpacityFrame(stuffFrame):
+def decreaseOpacityFrame(Frame0):
     n = 1.0
     while not n <= 0.01:
         n -= 0.01
-        pywinstyles.set_opacity(stuffFrame, n, color=None)
+        pywinstyles.set_opacity(Frame0, n, color=None)
         root.update()
         time.sleep(FADE_DELAY)
 
-def moveStuffFrame(stuffFrame):
-    stuffFrame.update_idletasks()
-    frame_width = stuffFrame.winfo_width()
-    frame_height = stuffFrame.winfo_height()
+def moveFrame0(Frame0):
+    Frame0.update_idletasks()
+    frame_width = Frame0.winfo_width()
+    frame_height = Frame0.winfo_height()
 
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
@@ -533,40 +528,40 @@ def moveStuffFrame(stuffFrame):
 
     new_x = random.randint(0, max_x)
     new_y = random.randint(0, max_y)
-    decreaseOpacityFrame(stuffFrame)
+    decreaseOpacityFrame(Frame0)
 
-    stuffFrame.place_forget()
-    stuffFrame.place(x=new_x, y=new_y)
+    Frame0.place_forget()
+    Frame0.place(x=new_x, y=new_y)
 
-    increaseOpacityFrame(stuffFrame)
-    root.after(35000, lambda: moveStuffFrame(stuffFrame))
+    increaseOpacityFrame(Frame0)
+    root.after(35000, lambda: moveFrame0(Frame0))
 
-stuffFrame = tk.Frame(root)
-stuffFrame.configure(bg="black")
-stuffFrame.place(x=0, y=0)
+Frame0 = tk.Frame(root)
+Frame0.configure(bg="black")
+Frame0.place(x=0, y=0)
 
-root.after(35000, lambda: moveStuffFrame(stuffFrame))
+root.after(35000, lambda: moveFrame0(Frame0))
 
 timeVar = tk.StringVar(value="time")
-timeLabel = tk.Label(stuffFrame, textvariable=timeVar, fg='white', bg='black', font=('Helvetica', 60))
+timeLabel = tk.Label(Frame0, textvariable=timeVar, fg='white', bg='black', font=('Helvetica', 60))
 timeLabel.pack(expand=True)
 
 dotwVar = tk.StringVar(value="dotw")
-dotwLabel = tk.Label(stuffFrame, textvariable=dotwVar, fg='white', bg='black', font=('Helvetica', 60))
+dotwLabel = tk.Label(Frame0, textvariable=dotwVar, fg='white', bg='black', font=('Helvetica', 60))
 dotwLabel.pack(expand=True)
 
 weather_var = tk.StringVar(value="weather")
-weatherLabel = tk.Label(stuffFrame, textvariable=weather_var, fg='white', bg='black', font=('Helvetica', 60))
+weatherLabel = tk.Label(Frame0, textvariable=weather_var, fg='white', bg='black', font=('Helvetica', 60))
 weatherLabel.pack(expand=True)
 
 userVar = tk.StringVar(value=f"Welcome, {getpass.getuser()} (logged on user)")
-userLabel = tk.Label(stuffFrame, textvariable=userVar, fg='white', bg='black', font=('Helvetica', 60))
+userLabel = tk.Label(Frame0, textvariable=userVar, fg='white', bg='black', font=('Helvetica', 60))
 userLabel.pack(expand=True)
 
 if __name__ == '__main__':
     root.after(200, _poll_fullscreen)
     root.after(200, _poll_withdraw)
-    captureThread = threading.Thread(target=openCVMain, daemon=True)
+    captureThread = threading.Thread(target=open_cv_main, daemon=True)
     listenThread = threading.Thread(target=listen_for_ack, daemon=True)
     captureThread.start()
     listenThread.start()
