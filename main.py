@@ -12,7 +12,7 @@ import cv2
 import speech_recognition as sr
 import wmi
 import pythoncom
-from comtypes import CLSCTX_ALL
+from comtypes import cast, CLSCTX_ALL, POINTER
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 import requests
 import pywinstyles
@@ -35,11 +35,8 @@ from constants import (
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
-global FADED_IN
-
 FADED_IN = False
 
-global expoBackoff
 expoBackoff = 1000  # milliseconds
 
 show_fullscreen_event = threading.Event()
@@ -89,7 +86,7 @@ class Data:
 #         return default
 #     return default
 
-def getWeather(weatherVar):
+def getWeather():
     def _fetch():
         url = "https://api.open-meteo.com/v1/forecast"
         params = {
@@ -115,7 +112,7 @@ def getWeather(weatherVar):
             logger.error("getWeather parse error: %s", e)
 
         try:
-            root.after(0, lambda: weatherVar.set
+            root.after(0, lambda: weather_var.set
                        (f"The temperature at {LAT}, {LONG} is \n {temp if temp is not None else 'N/A'}C°"))
         except tk.TclError as e:
             logger.debug("getWeather: failed to update tkinter variable: %s", e)
@@ -130,13 +127,12 @@ def getWeather(weatherVar):
 
 
 def start_fetch_thread():
-    return getWeather(weatherVar)
+    return getWeather()
 
 # i did this so that i can compare it below, it's only set once as a default
 oldTime = str(datetime.datetime.now().replace(microsecond=0))[:-3]
 
 def fadeInWindow():
-    global FADED_IN
     n = 0.01
     while n < 1.0:
         n += 0.01
@@ -146,7 +142,6 @@ def fadeInWindow():
     FADED_IN = True
 
 def fadeOutWindow():
-    global FADED_IN
     n = 1.0
     while n > 0.01:
         n -= 0.01
@@ -165,7 +160,7 @@ def getTimeToDisplay():
         Data.newData = True
         oldTime = currentTime
 
-def listenForAck():
+def listen_for_ack():
     # CoInitialize COM for this thread (required by WMI/pywin32)
     try:
         pythoncom.CoInitialize()
@@ -176,6 +171,7 @@ def listenForAck():
             devices = AudioUtilities.GetSpeakers()
             if hasattr(devices, "Activate"):
                 interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+                volume = cast(interface, POINTER(IAudioEndpointVolume))
             else:
                 volume = None
         except Exception as e:
@@ -228,7 +224,7 @@ def listenForAck():
                                 show_withdraw_event.set()
                                 Data.newData = False
                         except (OSError, IOError, sr.WaitTimeoutError) as e:
-                            # Stream closed or I/O error — break to outer loop and re-open microphone
+                            # Stream closed or I/O error. break to outer loop and re-open microphone
                             logger.warning("listen error (stream closed or I/O): %s", e)
                             break
                         except Exception as e:
@@ -550,9 +546,8 @@ dotwVar = tk.StringVar(value="dotw")
 dotwLabel = tk.Label(stuffFrame, textvariable=dotwVar, fg='white', bg='black', font=('Helvetica', 60))
 dotwLabel.pack(expand=True)
 
-global weatherLabel, weatherVar
-weatherVar = tk.StringVar(value="weather")
-weatherLabel = tk.Label(stuffFrame, textvariable=weatherVar, fg='white', bg='black', font=('Helvetica', 60))
+weather_var = tk.StringVar(value="weather")
+weatherLabel = tk.Label(stuffFrame, textvariable=weather_var, fg='white', bg='black', font=('Helvetica', 60))
 weatherLabel.pack(expand=True)
 
 userVar = tk.StringVar(value=f"Welcome, {getpass.getuser()} (logged on user)")
@@ -563,7 +558,7 @@ if __name__ == '__main__':
     root.after(200, _poll_fullscreen)
     root.after(200, _poll_withdraw)
     captureThread = threading.Thread(target=openCVMain, daemon=True)
-    listenThread = threading.Thread(target=listenForAck, daemon=True)
+    listenThread = threading.Thread(target=listen_for_ack, daemon=True)
     captureThread.start()
     listenThread.start()
 
