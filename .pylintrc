@@ -450,6 +450,7 @@ disable=raw-checker-failed,
         W0612, # unused-variable
         R0903, # too-few-public-methods
         W0718, #broad-exception-caught
+        W0212, # protected-access
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
