@@ -496,26 +496,26 @@ def _poll_withdraw():
 #     # Posted by Akascape, modified by community. See post 'Timeline' for change history
 #     # Retrieved 2026-01-21, License - CC BY-SA 4.0
 
-def increaseOpacityFrame(Frame0):
+def increaseOpacityFrame(frame0):
     n = 0.01
     while not n >= 1.0:
         n += 0.01
-        pywinstyles.set_opacity(Frame0, n, color=None)
+        pywinstyles.set_opacity(frame0, n, color=None)
         root.update()
         time.sleep(FADE_DELAY)
 
-def decreaseOpacityFrame(Frame0):
+def decreaseOpacityFrame(frame0):
     n = 1.0
     while not n <= 0.01:
         n -= 0.01
-        pywinstyles.set_opacity(Frame0, n, color=None)
+        pywinstyles.set_opacity(frame0, n, color=None)
         root.update()
         time.sleep(FADE_DELAY)
 
-def moveFrame0(Frame0):
-    Frame0.update_idletasks()
-    frame_width = Frame0.winfo_width()
-    frame_height = Frame0.winfo_height()
+def moveFrame0(frame0):
+    frame0.update_idletasks()
+    frame_width = frame0.winfo_width()
+    frame_height = frame0.winfo_height()
 
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
@@ -525,13 +525,13 @@ def moveFrame0(Frame0):
 
     new_x = random.randint(0, max_x)
     new_y = random.randint(0, max_y)
-    decreaseOpacityFrame(Frame0)
+    decreaseOpacityFrame(frame0)
 
-    Frame0.place_forget()
-    Frame0.place(x=new_x, y=new_y)
+    frame0.place_forget()
+    frame0.place(x=new_x, y=new_y)
 
-    increaseOpacityFrame(Frame0)
-    root.after(35000, lambda: moveFrame0(Frame0))
+    increaseOpacityFrame(frame0)
+    root.after(35000, lambda: moveFrame0(frame0))
 
 Frame0 = tk.Frame(root)
 Frame0.configure(bg="black")
