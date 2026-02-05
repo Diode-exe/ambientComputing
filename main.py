@@ -254,6 +254,7 @@ def listen_for_ack():
         pythoncom.CoUninitialize()
 
 def open_cv_main():
+    """Main OpenCV motion detection and face recognition loop."""
     # local backoff starts from global constant to avoid shadowing the module name
     expo_backoff = EXPO_BACKOFF
     # open video source
@@ -368,8 +369,8 @@ def open_cv_main():
                                 # rotate around center of face
                                 (h, w) = face_gray.shape[:2]
                                 center = (w // 2, h // 2)
-                                M = cv2.getRotationMatrix2D(center, angle, 1.0)
-                                rotated = cv2.warpAffine(face_gray, M, (w, h), flags=cv2.INTER_LINEAR)
+                                m = cv2.getRotationMatrix2D(center, angle, 1.0)
+                                rotated = cv2.warpAffine(face_gray, m, (w, h), flags=cv2.INTER_LINEAR)
                                 return rotated
                         except Exception:
                             pass
@@ -504,7 +505,7 @@ def _poll_withdraw():
 #     # Posted by Akascape, modified by community. See post 'Timeline' for change history
 #     # Retrieved 2026-01-21, License - CC BY-SA 4.0
 
-def increaseOpacityFrame(frame0):
+def increase_opacity_frame(frame0):
     """Increases the opacity of the given frame."""
     n = 0.01
     while n < 1.0:
@@ -513,7 +514,7 @@ def increaseOpacityFrame(frame0):
         root.update()
         time.sleep(FADE_DELAY)
 
-def decreaseOpacityFrame(frame0):
+def decrease_opacity_frame(frame0):
     """Decreases the opacity of the given frame."""
     n = 1.0
     while n > 0.01:
@@ -522,7 +523,8 @@ def decreaseOpacityFrame(frame0):
         root.update()
         time.sleep(FADE_DELAY)
 
-def moveFrame0(frame0):
+def move_frame(frame0):
+    """Moves the given frame to a random position on the screen."""
     frame0.update_idletasks()
     frame_width = frame0.winfo_width()
     frame_height = frame0.winfo_height()
@@ -535,19 +537,19 @@ def moveFrame0(frame0):
 
     new_x = random.randint(0, max_x)
     new_y = random.randint(0, max_y)
-    decreaseOpacityFrame(frame0)
+    decrease_opacity_frame(frame0)
 
     frame0.place_forget()
     frame0.place(x=new_x, y=new_y)
 
-    increaseOpacityFrame(frame0)
-    root.after(35000, lambda: moveFrame0(frame0))
+    increase_opacity_frame(frame0)
+    root.after(35000, lambda: move_frame(frame0))
 
 Frame0 = tk.Frame(root)
 Frame0.configure(bg="black")
 Frame0.place(x=0, y=0)
 
-root.after(35000, lambda: moveFrame0(Frame0))
+root.after(35000, lambda: move_frame(Frame0))
 
 timeVar = tk.StringVar(value="time")
 timeLabel = tk.Label(Frame0, textvariable=timeVar, fg='white', bg='black', font=('Helvetica', 60))
