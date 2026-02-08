@@ -99,7 +99,8 @@ root.withdraw()
 #         return default
 #     return default
 
-def getWeather():
+def get_weather():
+    """Fetch current weather data from Open-Meteo API in a separate thread."""
     def _fetch():
         url = "https://api.open-meteo.com/v1/forecast"
         params = {
@@ -116,36 +117,38 @@ def getWeather():
             data = r.json()
             temp = data.get("current_weather", {}).get("temperature")
             if temp is None:
-                logger.warning("getWeather: no temperature in response %s", data)
+                logger.warning("get_weather: no temperature in response %s", data)
             else:
                 logger.info("Temperature: %s", temp)
         except requests.RequestException as e:
-            logger.error("getWeather network error: %s", e)
+            logger.error("get_weather network error: %s", e)
         except (ValueError, json.JSONDecodeError) as e:
-            logger.error("getWeather parse error: %s", e)
+            logger.error("get_weather parse error: %s", e)
 
         try:
             root.after(0, lambda: weather_var.set
-                       (f"The temperature at {LAT}, {LONG} is \n {temp if temp is not None else 'N/A'}C°"))
+            (f"The temperature at {LAT}, {LONG} is \n {temp if temp is not None else 'N/A'}C°"))
         except tk.TclError as e:
-            logger.debug("getWeather: failed to update tkinter variable: %s", e)
+            logger.debug("get_weather: failed to update tkinter variable: %s", e)
 
         try:
             root.after(60000, start_fetch_thread)
         except tk.TclError as e:
-            logger.debug("getWeather: failed to schedule next fetch: %s", e)
+            logger.debug("get_weather: failed to schedule next fetch: %s", e)
 
     th = threading.Thread(target=_fetch, daemon=True)
     th.start()
 
 
 def start_fetch_thread():
-    return getWeather()
+    """Start the weather fetch thread."""
+    return get_weather()
 
 # i did this so that i can compare it below, it's only set once as a default
 TimeData.OLD_TIME = str(datetime.datetime.now().replace(microsecond=0))[:-3]
 
-def fadeInWindow():
+def fade_in_window():
+    """Fades in the main window."""
     n = 0.01
     while n < 1.0:
         n += 0.01
@@ -154,7 +157,8 @@ def fadeInWindow():
         time.sleep(FADE_DELAY)
     FadeData.faded_in = True
 
-def fadeOutWindow():
+def fade_out_window():
+    """Fades out the main window."""
     n = 1.0
     while n > 0.01:
         n -= 0.01
@@ -163,16 +167,18 @@ def fadeOutWindow():
         time.sleep(FADE_DELAY)
     FadeData.faded_in = False
 
-def getTimeToDisplay():
-    currentTime = str(datetime.datetime.now().strftime("%Y-%m-%d \n %H:%M:%S"))
-    dayOfTheWeek = datetime.datetime.now().strftime("%A")
-    dotwVar.set(dayOfTheWeek)
-    timeVar.set(currentTime)
-    if currentTime != TimeData.OLD_TIME:
+def get_time_to_display():
+    """Updates the time and day of the week display."""
+    current_time = str(datetime.datetime.now().strftime("%Y-%m-%d \n %H:%M:%S"))
+    day_of_the_week = datetime.datetime.now().strftime("%A")
+    dotwVar.set(day_of_the_week)
+    timeVar.set(current_time)
+    if current_time != TimeData.OLD_TIME:
         Data.newData = True
-        TimeData.OLD_TIME = currentTime
+        TimeData.OLD_TIME = current_time
 
 def listen_for_ack():
+    """Listens for voice commands to acknowledge and hide the display."""
     # CoInitialize COM for this thread (required by WMI/pywin32)
     try:
         pythoncom.CoInitialize()
@@ -248,6 +254,9 @@ def listen_for_ack():
         pythoncom.CoUninitialize()
 
 def open_cv_main():
+    """Main OpenCV motion detection and face recognition loop."""
+    # local backoff starts from global constant to avoid shadowing the module name
+    expo_backoff = EXPO_BACKOFF
     # open video source
     try:
         src = int(SOURCE)
@@ -263,10 +272,10 @@ def open_cv_main():
         pass
     if not cap.isOpened():
         logger.error("Cannot open video source: %s", SOURCE)
-        time.sleep(EXPO_BACKOFF / 1000.0)
-        EXPO_BACKOFF += 1000
-        EXPO_BACKOFF = min(EXPO_BACKOFF * 2, 16000)  # cap backoff at 16 seconds
-        if EXPO_BACKOFF == 16000:
+        time.sleep(expo_backoff / 1000.0)
+        expo_backoff += 1000
+        expo_backoff = min(expo_backoff * 2, 16000)  # cap backoff at 16 seconds
+        if expo_backoff == 16000:
             logger.info("Max backoff reached. Stopping. ")
             stop.set()
             root.after(0, root.quit)
@@ -360,8 +369,8 @@ def open_cv_main():
                                 # rotate around center of face
                                 (h, w) = face_gray.shape[:2]
                                 center = (w // 2, h // 2)
-                                M = cv2.getRotationMatrix2D(center, angle, 1.0)
-                                rotated = cv2.warpAffine(face_gray, M, (w, h), flags=cv2.INTER_LINEAR)
+                                m = cv2.getRotationMatrix2D(center, angle, 1.0)
+                                rotated = cv2.warpAffine(face_gray, m, (w, h), flags=cv2.INTER_LINEAR)
                                 return rotated
                         except Exception:
                             pass
@@ -455,7 +464,7 @@ def open_cv_main():
                     show_fullscreen_event.set()
                     open_cv_main.consec_no_motion = 0
 
-            getTimeToDisplay()
+            get_time_to_display()
 
             # if getattr(open_cv_main, "consec_no_motion", 0) <= 200:
             #     if not show_withdraw_event.is_set():
@@ -475,7 +484,7 @@ def _poll_fullscreen():
             root.lift()
             root.focus_force()
             if not FadeData.faded_in:
-                fadeInWindow()
+                fade_in_window()
         except Exception:
             pass
         show_fullscreen_event.clear()
@@ -485,7 +494,7 @@ def _poll_fullscreen():
 def _poll_withdraw():
     if show_withdraw_event.is_set():
         try:
-            fadeOutWindow()
+            fade_out_window()
             root.withdraw()
         except Exception:
             pass
@@ -496,26 +505,29 @@ def _poll_withdraw():
 #     # Posted by Akascape, modified by community. See post 'Timeline' for change history
 #     # Retrieved 2026-01-21, License - CC BY-SA 4.0
 
-def increaseOpacityFrame(Frame0):
+def increase_opacity_frame(frame0):
+    """Increases the opacity of the given frame."""
     n = 0.01
-    while not n >= 1.0:
+    while n < 1.0:
         n += 0.01
-        pywinstyles.set_opacity(Frame0, n, color=None)
+        pywinstyles.set_opacity(frame0, n, color=None)
         root.update()
         time.sleep(FADE_DELAY)
 
-def decreaseOpacityFrame(Frame0):
+def decrease_opacity_frame(frame0):
+    """Decreases the opacity of the given frame."""
     n = 1.0
-    while not n <= 0.01:
+    while n > 0.01:
         n -= 0.01
-        pywinstyles.set_opacity(Frame0, n, color=None)
+        pywinstyles.set_opacity(frame0, n, color=None)
         root.update()
         time.sleep(FADE_DELAY)
 
-def moveFrame0(Frame0):
-    Frame0.update_idletasks()
-    frame_width = Frame0.winfo_width()
-    frame_height = Frame0.winfo_height()
+def move_frame(frame0):
+    """Moves the given frame to a random position on the screen."""
+    frame0.update_idletasks()
+    frame_width = frame0.winfo_width()
+    frame_height = frame0.winfo_height()
 
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
@@ -525,19 +537,19 @@ def moveFrame0(Frame0):
 
     new_x = random.randint(0, max_x)
     new_y = random.randint(0, max_y)
-    decreaseOpacityFrame(Frame0)
+    decrease_opacity_frame(frame0)
 
-    Frame0.place_forget()
-    Frame0.place(x=new_x, y=new_y)
+    frame0.place_forget()
+    frame0.place(x=new_x, y=new_y)
 
-    increaseOpacityFrame(Frame0)
-    root.after(35000, lambda: moveFrame0(Frame0))
+    increase_opacity_frame(frame0)
+    root.after(35000, lambda: move_frame(frame0))
 
 Frame0 = tk.Frame(root)
 Frame0.configure(bg="black")
 Frame0.place(x=0, y=0)
 
-root.after(35000, lambda: moveFrame0(Frame0))
+root.after(35000, lambda: move_frame(Frame0))
 
 timeVar = tk.StringVar(value="time")
 timeLabel = tk.Label(Frame0, textvariable=timeVar, fg='white', bg='black', font=('Helvetica', 60))
