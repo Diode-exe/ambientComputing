@@ -304,6 +304,7 @@ def open_cv_main():
                 logger.warning('Face recognizer model not found at %s', MODEL_PATH)
             else:
                 logger.warning('cv2.face module not available; skipping face recognition')
+                logger.warning("Install opencv-contrib-python to get access to cv2.face")
     except Exception as e:
         logger.error('Error loading recognizer: %s', e)
 
